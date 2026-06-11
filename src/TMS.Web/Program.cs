@@ -45,7 +45,18 @@ builder.Services.AddRazorComponents()
 builder.Services.AddAntDesign();
 
 // HttpClient for API calls
-builder.Services.AddScoped<HttpClient>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped(sp => 
+{
+    var httpContextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
+    var request = httpContextAccessor.HttpContext?.Request;
+    
+    var baseUrl = request != null 
+        ? $"{request.Scheme}://{request.Host}"
+        : "https://localhost:7065";
+    
+    return new HttpClient { BaseAddress = new Uri(baseUrl) };
+});
 
 var app = builder.Build();
 
