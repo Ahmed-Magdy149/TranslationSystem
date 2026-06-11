@@ -1,15 +1,12 @@
-# Build stage
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src
+# Build stage - Use .NET 10.0 SDK
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /app
 
-# Copy the csproj file first (for layer caching)
-COPY src/TMS.Web/TMS.Web.csproj src/TMS.Web/
+# Copy all project files
+COPY . .
 
 # Restore dependencies
 RUN dotnet restore src/TMS.Web/TMS.Web.csproj
-
-# Copy everything else
-COPY . .
 
 # Build
 RUN dotnet build src/TMS.Web/TMS.Web.csproj -c Release -o /app/build
@@ -18,7 +15,7 @@ RUN dotnet build src/TMS.Web/TMS.Web.csproj -c Release -o /app/build
 RUN dotnet publish src/TMS.Web/TMS.Web.csproj -c Release -o /app/publish
 
 # Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 EXPOSE 8080
 COPY --from=build /app/publish .
