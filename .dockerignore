@@ -1,0 +1,66 @@
+# .NET build outputs
+**/bin/
+**/obj/
+**/out/
+**/publish/
+
+# Visual Studio files
+**/.vs/
+**/.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+
+# NuGet
+*.nupkg
+**/packages/*
+!**/packages/build/
+*.nuget.props
+*.nuget.targets
+
+# Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# Node modules
+**/node_modules/
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Docker
+**/.dockerignore
+**/Dockerfile*
+**/docker-compose*
+
+# IDE and editor files
+**/*.swp
+**/*.swo
+**/*~
+.DS_Store
+
+# Logs
+*.log
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# MongoDB local data
+**/data/db/
