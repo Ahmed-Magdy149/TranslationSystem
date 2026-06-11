@@ -1,0 +1,71 @@
+﻿@inherits LayoutComponentBase
+
+<Layout Style="min-height: 100vh; background: #f0f2f5;">
+    <Sider Theme="SiderTheme.Dark"
+           Collapsible
+           Breakpoint="BreakpointType.Md"
+           CollapsedWidth="80"
+           Style="background: linear-gradient(180deg, #1a1f37 0%, #0f1322 100%); box-shadow: 4px 0 20px rgba(0,0,0,0.15);">
+        <div class="sidebar-brand">
+            <div class="brand-icon">
+                <Icon Type="global" Theme="IconThemeType.Outline" Style="font-size: 28px; color: #4facfe;" />
+            </div>
+            <h3 class="brand-text">TMS</h3>
+        </div>
+        <Menu Theme="MenuTheme.Dark"
+              Mode="MenuMode.Inline"
+              DefaultSelectedKeys="@(new[] {"1"})"
+              Style="background: transparent; border-right: none;">
+            <MenuItem Key="1" RouterLink="/" RouterMatch="NavLinkMatch.All" Class="nav-item-modern">
+                <Icon Type="dashboard" Theme="IconThemeType.Outline" />
+                <span>Dashboard</span>
+            </MenuItem>
+            <MenuItem Key="2" RouterLink="/tasks" Class="nav-item-modern">
+                <Icon Type="file-text" Theme="IconThemeType.Outline" />
+                <span>Tasks</span>
+            </MenuItem>
+            <MenuItem Key="3" RouterLink="/translators" Class="nav-item-modern">
+                <Icon Type="team" Theme="IconThemeType.Outline" />
+                <span>Translators</span>
+            </MenuItem>
+            <MenuItem Key="4" RouterLink="/users" Class="nav-item-modern">
+                <Icon Type="user" Theme="IconThemeType.Outline" />
+                <span>Users</span>
+            </MenuItem>
+            <MenuItem Key="5" RouterLink="/reviews" Class="nav-item-modern">
+                <Icon Type="star" Theme="IconThemeType.Outline" />
+                <span>Reviews</span>
+            </MenuItem>
+        </Menu>
+        <div class="sidebar-footer">
+            <p>v1.0.0</p>
+        </div>
+    </Sider>
+    <Layout Style="background: #f0f2f5;">
+        <Header Class="modern-header">
+            <div class="header-left">
+                <Breadcrumb>
+                    <BreadcrumbItem><Icon Type="home" Theme="IconThemeType.Outline" /> Home</BreadcrumbItem>
+                </Breadcrumb>
+            </div>
+            <div class="header-right">
+                <Badge Count="3" Dot="false">
+                    <Button Type="ButtonType.Text" Icon="bell" Size="ButtonSize.Large" Class="header-btn" />
+                </Badge>
+                <div class="user-profile">
+                    <Avatar Size="AvatarSize.Default" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">A</Avatar>
+                    <span class="user-name">Admin</span>
+                </div>
+            </div>
+        </Header>
+        <Content Class="modern-content">
+            @Body
+        </Content>
+    </Layout>
+</Layout>
+
+<div id="blazor-error-ui" data-nosnippet style="display:none;">
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">&#x1F5D9;</span>
+</div>

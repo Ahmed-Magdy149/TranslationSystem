@@ -1,0 +1,237 @@
+﻿@page "/"
+
+<PageTitle>Dashboard - TMS</PageTitle>
+
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+    <div class="welcome-content">
+        <TypographyTitle Level="3" Style="color: white; margin: 0;">Welcome back, Admin!</TypographyTitle>
+        <TypographyText Style="color: rgba(255,255,255,0.8); font-size: 16px;">Here's what's happening with your translation projects today.</TypographyText>
+    </div>
+    <div class="welcome-illustration">
+        <Icon Type="global" Theme="IconThemeType.Outline" Style="font-size: 64px; color: rgba(255,255,255,0.2);" />
+    </div>
+</div>
+
+<!-- Stat Cards Row -->
+<Row Gutter="16" Style="margin-top: 24px;">
+    <Col Xs="24" Sm="12" Md="12" Lg="6" Xl="6">
+        <div class="stat-card stat-card-blue">
+            <div class="stat-icon-wrapper">
+                <Icon Type="file-text" Theme="IconThemeType.Outline" Class="stat-icon" />
+            </div>
+            <div class="stat-info">
+                <TypographyText Class="stat-label">Total Tasks</TypographyText>
+                <TypographyTitle Level="2" Class="stat-value">42</TypographyTitle>
+                <TypographyText Class="stat-trend">
+                    <Icon Type="rise" Theme="IconThemeType.Outline" Style="color: #52c41a;" /> +12% this week
+                </TypographyText>
+            </div>
+        </div>
+    </Col>
+    <Col Xs="24" Sm="12" Md="12" Lg="6" Xl="6">
+        <div class="stat-card stat-card-amber">
+            <div class="stat-icon-wrapper">
+                <Icon Type="clock-circle" Theme="IconThemeType.Outline" Class="stat-icon" />
+            </div>
+            <div class="stat-info">
+                <TypographyText Class="stat-label">Pending</TypographyText>
+                <TypographyTitle Level="2" Class="stat-value">12</TypographyTitle>
+                <TypographyText Class="stat-trend">
+                    <Icon Type="fall" Theme="IconThemeType.Outline" Style="color: #ff4d4f;" /> -3% this week
+                </TypographyText>
+            </div>
+        </div>
+    </Col>
+    <Col Xs="24" Sm="12" Md="12" Lg="6" Xl="6">
+        <div class="stat-card stat-card-violet">
+            <div class="stat-icon-wrapper">
+                <Icon Type="reload" Theme="IconThemeType.Outline" Class="stat-icon" />
+            </div>
+            <div class="stat-info">
+                <TypographyText Class="stat-label">In Progress</TypographyText>
+                <TypographyTitle Level="2" Class="stat-value">8</TypographyTitle>
+                <TypographyText Class="stat-trend">
+                    <Icon Type="rise" Theme="IconThemeType.Outline" Style="color: #52c41a;" /> +5% this week
+                </TypographyText>
+            </div>
+        </div>
+    </Col>
+    <Col Xs="24" Sm="12" Md="12" Lg="6" Xl="6">
+        <div class="stat-card stat-card-teal">
+            <div class="stat-icon-wrapper">
+                <Icon Type="team" Theme="IconThemeType.Outline" Class="stat-icon" />
+            </div>
+            <div class="stat-info">
+                <TypographyText Class="stat-label">Translators</TypographyText>
+                <TypographyTitle Level="2" Class="stat-value">15</TypographyTitle>
+                <TypographyText Class="stat-trend">
+                    <Icon Type="rise" Theme="IconThemeType.Outline" Style="color: #52c41a;" /> +2 new
+                </TypographyText>
+            </div>
+        </div>
+    </Col>
+</Row>
+
+<!-- Main Content Area -->
+<Row Gutter="24" Style="margin-top: 24px;">
+    <!-- Recent Tasks Table -->
+    <Col Xs="24" Lg="16">
+        <Card Bordered="false" Class="modern-card" TitleTemplate="@taskTableTitle">
+            <Table DataSource="@recentTasks" TItem="RecentTask" Class="modern-table">
+                <Column Title="Task" TData="string">
+                    <div class="task-cell">
+                        <Avatar Size="AvatarSize.Small" Style="background: #e6f7ff; color: #1890ff;">
+                            <Icon Type="file-text" Theme="IconThemeType.Outline" />
+                        </Avatar>
+                        <span class="task-title">@context.Title</span>
+                    </div>
+                </Column>
+                <Column Title="Languages" TData="string">
+                    <span class="language-pair">
+                        <Tag Color="@("blue")">@context.SourceLanguage</Tag>
+                        <Icon Type="arrow-right" Theme="IconThemeType.Outline" Style="font-size: 12px; color: #999; margin: 0 4px;" />
+                        <Tag Color="@("purple")">@context.TargetLanguage</Tag>
+                    </span>
+                </Column>
+                <Column Title="Status" TData="string">
+                    <Tag Color="@GetStatusColor(context.Status)" Class="status-tag">@context.Status</Tag>
+                </Column>
+                <Column Title="Deadline" TData="string">
+                    <span class="deadline-cell">
+                        <Icon Type="calendar" Theme="IconThemeType.Outline" Style="color: #ff4d4f; margin-right: 4px;" />
+                        @context.Deadline
+                    </span>
+                </Column>
+                <ActionColumn Title="" Width="80">
+                    <Button Type="ButtonType.Primary" Size="ButtonSize.Small" Class="view-btn">View</Button>
+                </ActionColumn>
+            </Table>
+        </Card>
+    </Col>
+
+    <!-- Right Side Panel -->
+    <Col Xs="24" Lg="8">
+        <Space Direction="SpaceDirection.Vertical" Style="width: 100%;" Size="SpaceSize.Small">
+            <!-- Quick Actions -->
+            <Card Bordered="false" Class="modern-card" Title="Quick Actions">
+        <Space Direction="SpaceDirection.Vertical" Style="width: 100%;" Size="  SpaceSize.Small">
+                    <Button Type="ButtonType.Primary" Block Size="ButtonSize.Large" Icon="plus" Class="action-btn action-primary">
+                        Create New Task
+                    </Button>
+                    <Button Type="ButtonType.Default" Block Size="ButtonSize.Large" Icon="team" Class="action-btn">
+                        Add Translator
+                    </Button>
+                    <Button Type="ButtonType.Default" Block Size="ButtonSize.Large" Icon="user" Class="action-btn">
+                        Manage Users
+                    </Button>
+                    <Button Type="ButtonType.Default" Block Size="ButtonSize.Large" Icon="star" Class="action-btn">
+                        View Reviews
+                    </Button>
+                </Space>
+            </Card>
+
+            <!-- System Status -->
+            <Card Bordered="false" Class="modern-card" Title="System Health">
+        <Space Direction="SpaceDirection.Vertical" Style="width: 100%;" Size="SpaceSize.Small">
+                    <div class="health-item">
+                        <div class="health-icon online">
+                            <Icon Type="database" Theme="IconThemeType.Outline" />
+                        </div>
+                        <div class="health-info">
+                            <TypographyText Strong>Database</TypographyText>
+                            <TypographyText Type="TextType.Secondary">MongoDB Connected</TypographyText>
+                        </div>
+                        <Badge Status="BadgeStatus.Success" Text="Online" />
+                    </div>
+                    <div class="health-item">
+                        <div class="health-icon online">
+                            <Icon Type="api" Theme="IconThemeType.Outline" />
+                        </div>
+                        <div class="health-info">
+                            <TypographyText Strong>API Services</TypographyText>
+                            <TypographyText Type="TextType.Secondary">All systems operational</TypographyText>
+                        </div>
+                        <Badge Status="BadgeStatus.Success" Text="Online" />
+                    </div>
+                    <div class="health-item">
+                        <div class="health-icon online">
+                            <Icon Type="file" Theme="IconThemeType.Outline" />
+                        </div>
+                        <div class="health-info">
+                            <TypographyText Strong>File Processing</TypographyText>
+                            <TypographyText Type="TextType.Secondary">PDF, DOCX, TXT ready</TypographyText>
+                        </div>
+                        <Badge Status="BadgeStatus.Success" Text="Ready" />
+                    </div>
+                    <div class="health-item">
+                        <div class="health-icon offline">
+                            <Icon Type="robot" Theme="IconThemeType.Outline" />
+                        </div>
+                        <div class="health-info">
+                            <TypographyText Strong>AI Integration</TypographyText>
+                            <TypographyText Type="TextType.Secondary">Coming soon</TypographyText>
+                        </div>
+                        <Badge Status="BadgeStatus.Default" Text="Soon" />
+                    </div>
+                </Space>
+            </Card>
+
+            <!-- Task Summary -->
+            <Card Bordered="false" Class="modern-card" Title="Task Overview">
+                <div class="overview-stat">
+                    <div class="overview-bar-bg">
+                        <div class="overview-bar-fill" style="width: 52%;"></div>
+                    </div>
+                    <div class="overview-labels">
+                        <div>
+                            <TypographyTitle Level="4" Style="margin: 0; color: #1890ff;">22</TypographyTitle>
+                            <TypographyText Type="TextType.Secondary">Approved</TypographyText>
+                        </div>
+                        <div style="text-align: right;">
+                            <TypographyTitle Level="4" Style="margin: 0; color: #ff4d4f;">12</TypographyTitle>
+                            <TypographyText Type="TextType.Secondary">Pending</TypographyText>
+                        </div>
+                    </div>
+                </div>
+            </Card>
+        </Space>
+    </Col>
+</Row>
+
+@code {
+    class RecentTask
+    {
+        public string Id { get; set; } = null!;
+        public string Title { get; set; } = null!;
+        public string SourceLanguage { get; set; } = null!;
+        public string TargetLanguage { get; set; } = null!;
+        public string Status { get; set; } = null!;
+        public string Deadline { get; set; } = null!;
+    }
+
+    string GetStatusColor(string status) => status switch
+    {
+        "Pending" => "red",
+        "In Progress" => "blue",
+        "Submitted" => "orange",
+        _ => "green"
+    };
+
+    List<RecentTask> recentTasks = new()
+    {
+        new() { Id = "1", Title = "Medical Report EN->AR", SourceLanguage = "English", TargetLanguage = "Arabic", Status = "Pending", Deadline = "2026-06-15" },
+        new() { Id = "2", Title = "Legal Contract FR->EN", SourceLanguage = "French", TargetLanguage = "English", Status = "In Progress", Deadline = "2026-06-18" },
+        new() { Id = "3", Title = "Technical Manual DE->EN", SourceLanguage = "German", TargetLanguage = "English", Status = "Submitted", Deadline = "2026-06-12" },
+        new() { Id = "4", Title = "Marketing Brochure ES->EN", SourceLanguage = "Spanish", TargetLanguage = "English", Status = "Approved", Deadline = "2026-06-10" },
+        new() { Id = "5", Title = "Financial Report CN->EN", SourceLanguage = "Chinese", TargetLanguage = "English", Status = "In Progress", Deadline = "2026-06-20" }
+    };
+
+    RenderFragment taskTableTitle =
+        @<Template>
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span>Recent Tasks</span>
+                <Button Type="ButtonType.Link" Size="ButtonSize.Small">View All</Button>
+            </div>
+        </Template>;
+}
