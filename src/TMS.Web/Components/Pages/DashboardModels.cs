@@ -63,10 +63,10 @@ public class DashboardModels
 
     public static List<MetricData> GetMetrics() => new()
     {
-        new() { Label = "Words This Month", Icon = "font-size", IconBg = "#dbeafe", IconColor = "#2563eb", Value = "42.6K", Percentage = 78, BarColor = "linear-gradient(90deg, #3b82f6, #60a5fa)" },
-        new() { Label = "Productivity Score", Icon = "rise", IconBg = "#dcfce7", IconColor = "#16a34a", Value = "91%", Percentage = 91, BarColor = "linear-gradient(90deg, #22c55e, #4ade80)" },
-        new() { Label = "QA Score", Icon = "safety-certificate", IconBg = "#f3e8ff", IconColor = "#9333ea", Value = "96.4%", Percentage = 96, BarColor = "linear-gradient(90deg, #a855f7, #c084fc)" },
-        new() { Label = "On-Time Delivery", Icon = "carry-out", IconBg = "#fef3c7", IconColor = "#d97706", Value = "94%", Percentage = 94, BarColor = "linear-gradient(90deg, #f59e0b, #fbbf24)" }
+        new() { Label = "Words This Month", Icon = "font-size", IconBg = "#dbeafe", IconColor = "#2563eb", Value = "42.6K", Percentage = 78, BarColor = "#3b82f6" },
+        new() { Label = "Productivity Score", Icon = "rise", IconBg = "#dcfce7", IconColor = "#16a34a", Value = "91%", Percentage = 91, BarColor = "#22c55e" },
+        new() { Label = "QA Score", Icon = "safety-certificate", IconBg = "#f3e8ff", IconColor = "#9333ea", Value = "96.4%", Percentage = 96, BarColor = "#a855f7" },
+        new() { Label = "On-Time Delivery", Icon = "carry-out", IconBg = "#fef3c7", IconColor = "#d97706", Value = "94%", Percentage = 94, BarColor = "#f59e0b" }
     };
 
     public static List<ChartItem> GetChartData() => new()

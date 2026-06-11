@@ -13,15 +13,21 @@ public partial class Login : ComponentBase
     [Inject] private MessageService Message { get; set; } = default!;
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
 
-    private LoginModels.LoginModel loginModel = new();
+    private LoginModels.LoginModel loginModel = new()
+    {
+        Email = "admin@translationgate.com",
+        Password = "password123"
+    };
     private bool loading = false;
     private bool rememberMe = false;
 
     private async Task HandleLogin()
     {
         loading = true;
+        
         try
         {
+            // Call backend API
             var response = await Http.PostAsJsonAsync("/api/auth/login", loginModel);
             
             if (response.IsSuccessStatusCode)
@@ -30,10 +36,22 @@ public partial class Login : ComponentBase
                 
                 if (result != null && result.Success)
                 {
-                    Message.Success("Login successful!");
-                    await JSRuntime.InvokeVoidAsync("localStorage.setItem", "user", 
-                        System.Text.Json.JsonSerializer.Serialize(result.User));
-                    Navigation.NavigateTo("/");
+                    Message.Success("Login successful! Welcome back.");
+                    
+                    // Store token and user info in localStorage
+                    if (!string.IsNullOrEmpty(result.Token))
+                    {
+                        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "token", result.Token);
+                    }
+                    
+                    if (result.User != null)
+                    {
+                        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "user", 
+                            System.Text.Json.JsonSerializer.Serialize(result.User));
+                    }
+                    
+                    // Navigate to Dashboard
+                    Navigation.NavigateTo("/dashboard", forceLoad: true);
                 }
                 else
                 {
@@ -42,8 +60,13 @@ public partial class Login : ComponentBase
             }
             else
             {
-                Message.Error("Invalid email or password");
+                var errorResult = await response.Content.ReadFromJsonAsync<LoginModels.LoginResponse>();
+                Message.Error(errorResult?.Message ?? "Invalid email or password");
             }
+        }
+        catch (HttpRequestException)
+        {
+            Message.Error("Unable to3 connect to server. Please try again.");
         }
         catch (Exception ex)
         {

@@ -24,6 +24,7 @@ builder.Services.AddScoped<IRepository<Review>>(sp =>
     new MongoRepository<Review>(sp.GetRequiredService<MongoDbContext>().Reviews));
 
 // Application Services
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<ITranslatorService, TranslatorService>();

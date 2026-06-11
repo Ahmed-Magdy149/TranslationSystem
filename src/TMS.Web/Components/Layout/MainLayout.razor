@@ -1,78 +1,147 @@
 ﻿@inherits LayoutComponentBase
+@implements IDisposable
 @inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 
 <Layout Style="min-height: 100vh; background: #f8fafc;">
     <Sider Theme="@SiderTheme.Dark"
            Collapsible
            CollapsedWidth="80"
-           Style="background: #ffffff; border-right: 1px solid #e8e8e8;">
-        <div class="sidebar-brand">
-            <Avatar Shape="@AvatarShape.Square" Size="@AvatarSize.Large" Style="background: #1a73e8; border-radius: 10px;">
-                <Icon Type="global" Style="font-size: 22px; color: white;" />
-            </Avatar>
-            @if (!collapsed)
-            {
-                <span class="sidebar-brand-title">The Translation Gate</span>
-            }
+           Style="background: #1e293b; border-right: 1px solid #334155;">
+        <div class="sidebar-header">
+            <div class="sidebar-brand">
+                @if (!collapsed)
+                {
+                    <Avatar Shape="@AvatarShape.Square" Size="@AvatarSize.Large" Style="background: #3b82f6; border-radius: 10px;">
+                        <Icon Type="global" Style="font-size: 22px; color: white;" />
+                    </Avatar>
+                    <span class="sidebar-brand-title">The Translation Gate</span>
+                }
+                else
+                {
+                    <Avatar Shape="@AvatarShape.Square" Size="@AvatarSize.Default" Style="background: #3b82f6; border-radius: 8px;">
+                        <Icon Type="global" Style="font-size: 18px; color: white;" />
+                    </Avatar>
+                }
+            </div>
+            <Button Type="@ButtonType.Text" OnClick="ToggleCollapse" Class="collapse-btn">
+                <Icon Type="@GetCollapseIcon()" Style="font-size: 16px; color: #94a3b8;" />
+            </Button>
         </div>
-        <div class="sidebar-nav-section">
-            @if (!collapsed)
-            {
-                <span class="sidebar-section-label">NAVIGATION</span>
-            }
-            <Menu Theme="@MenuTheme.Light"
-                  Mode="@MenuMode.Inline"
-                  DefaultSelectedKeys="@(new[] { GetMenuKey() })"
-                  InlineCollapsed="collapsed"
-                  Class="sidebar-menu">
-                <MenuItem Key="dashboard" RouterLink="/dashboard">
-                    <Icon Type="dashboard" />
-                    <span>Dashboard</span>
-                </MenuItem>
-                <MenuItem Key="tasks" RouterLink="/tasks">
-                    <Icon Type="file-text" />
-                    <span>Tasks</span>
-                </MenuItem>
-                <MenuItem Key="translators" RouterLink="/translators">
-                    <Icon Type="team" />
-                    <span>Translators</span>
-                </MenuItem>
-                <MenuItem Key="users" RouterLink="/users">
+
+        @if (!collapsed)
+        {
+            <div class="role-toggle-container">
+                <div class="role-button @(currentUserRole == UserRole.Translator ? "active-role" : "")" @onclick="SetRoleToTranslator">
                     <Icon Type="user" />
-                    <span>Users</span>
-                </MenuItem>
-                <MenuItem Key="reviews" RouterLink="/reviews">
-                    <Icon Type="star" />
-                    <span>Reviews</span>
-                </MenuItem>
-            </Menu>
-        </div>
-        <div class="sidebar-account-section">
-            @if (!collapsed)
+                    <span>You</span>
+                </div>
+                <div class="role-button @(currentUserRole == UserRole.Manager ? "active-role" : "")" @onclick="SetRoleToManager">
+                    <Icon Type="team" />
+                    <span>Manager</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="nav-spacer"></div>
+        }
+
+        <div class="sidebar-menu-container">
+            @if (currentUserRole == UserRole.Manager)
             {
-                <span class="sidebar-section-label">ACCOUNT</span>
+                <Menu Mode="@MenuMode.Inline"
+                      Theme="@MenuTheme.Dark"
+                      DefaultSelectedKeys="@(new[] { GetMenuKey() })"
+                      InlineCollapsed="collapsed"
+                      Class="sidebar-menu-dark">
+                    <MenuItem Key="dashboard" Icon="dashboard" RouterLink="/dashboard">
+                        <span>Dashboard</span>
+                    </MenuItem>
+                    <MenuItem Key="tasks" Icon="file-text" RouterLink="/tasks">
+                        <span>Tasks</span>
+                    </MenuItem>
+                    <MenuItem Key="translators" Icon="team" RouterLink="/translators">
+                        <span>Translators</span>
+                    </MenuItem>
+                    <MenuItem Key="users" Icon="user" RouterLink="/users">
+                        <span>Users</span>
+                    </MenuItem>
+                    <MenuItem Key="reviews" Icon="star" RouterLink="/reviews">
+                        <span>Reviews</span>
+                    </MenuItem>
+                    <SubMenu Key="settings" TitleTemplate="@settingsTitleTemplate">
+                        <MenuItemGroup Key="account" Title="Account">
+                            <MenuItem Key="profile" OnClick="@(() => NavigateTo("/profile"))">
+                                <Icon Type="profile" />
+                                <span>Personal information</span>
+                            </MenuItem>
+                            <MenuItem Key="password" OnClick="@(() => NavigateTo("/change-password"))">
+                                <Icon Type="lock" />
+                                <span>Change password</span>
+                            </MenuItem>
+                            <MenuItem Key="notifications" OnClick="@(() => NavigateTo("/notifications"))">
+                                <Icon Type="bell" />
+                                <span>Notification settings</span>
+                            </MenuItem>
+                        </MenuItemGroup>
+                    </SubMenu>
+                </Menu>
             }
-            <Menu Theme="@MenuTheme.Light"
-                  Mode="@MenuMode.Inline"
-                  InlineCollapsed="collapsed"
-                  Class="sidebar-menu">
-                <MenuItem Key="profile">
-                    <Icon Type="profile" />
-                    <span>Profile</span>
-                </MenuItem>
-                <MenuItem Key="settings">
-                    <Icon Type="setting" />
-                    <span>Settings</span>
-                </MenuItem>
-            </Menu>
+            else
+            {
+                <Menu Mode="@MenuMode.Inline"
+                      Theme="@MenuTheme.Dark"
+                      DefaultSelectedKeys="@(new[] { GetMenuKey() })"
+                      InlineCollapsed="collapsed"
+                      Class="sidebar-menu-dark">
+                    <MenuItem Key="dashboard" Icon="dashboard" RouterLink="/dashboard">
+                        <span>Dashboard</span>
+                    </MenuItem>
+                    <MenuItem Key="my-tasks" Icon="file-text" RouterLink="/my-tasks">
+                        <span>My Tasks</span>
+                    </MenuItem>
+                    <MenuItem Key="my-reviews" Icon="star" RouterLink="/my-reviews">
+                        <span>My Reviews</span>
+                    </MenuItem>
+                    <MenuItem Key="users" Icon="user" RouterLink="/users">
+                        <span>Users</span>
+                    </MenuItem>
+                    <MenuItem Key="calendar" Icon="calendar" RouterLink="/calendar">
+                        <span>Calendar</span>
+                    </MenuItem>
+                    <SubMenu Key="settings" TitleTemplate="@settingsTitleTemplate">
+                        <MenuItemGroup Key="account" Title="Account">
+                            <MenuItem Key="profile" OnClick="@(() => NavigateTo("/profile"))">
+                                <Icon Type="profile" />
+                                <span>Personal information</span>
+                            </MenuItem>
+                            <MenuItem Key="password" OnClick="@(() => NavigateTo("/change-password"))">
+                                <Icon Type="lock" />
+                                <span>Change password</span>
+                            </MenuItem>
+                            <MenuItem Key="notifications" OnClick="@(() => NavigateTo("/notifications"))">
+                                <Icon Type="bell" />
+                                <span>Notification settings</span>
+                            </MenuItem>
+                        </MenuItemGroup>
+                    </SubMenu>
+                </Menu>
+            }
         </div>
-        <div class="sidebar-footer">
-            <Avatar Style="background: #1a73e8;">SR</Avatar>
+
+        <div class="sidebar-footer-dark">
             @if (!collapsed)
             {
-                <div class="sidebar-footer-info">
-                    <span class="sidebar-footer-name">Sarah Reed</span>
-                    <span class="sidebar-footer-role">Project Manager</span>
+                <div class="logout-menu-item" @onclick="HandleLogout">
+                    <Icon Type="logout" />
+                    <span>Sign out</span>
+                </div>
+            }
+            else
+            {
+                <div class="logout-icon-only" @onclick="HandleLogout" title="Sign out">
+                    <Icon Type="logout" Style="color: #94a3b8;" />
                 </div>
             }
         </div>
@@ -81,44 +150,22 @@
         <Header Class="app-header" Style="background: white; padding: 0 24px; height: 64px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e8e8e8;">
             <div style="display: flex; align-items: center; gap: 16px;">
                 <Button Type="@ButtonType.Text" OnClick="ToggleCollapse" Style="padding: 4px 8px;">
-                    <Icon Type="@GetCollapseIcon()" Style="font-size: 16px; color: #595959;" />
+                    <Icon Type="@GetCollapseIcon()" Style="font-size: 18px; color: #595959;" />
                 </Button>
-                <div>
-                    <span style="font-size: 20px; font-weight: 600; color: #1a1a1a; display: block;">@GetPageTitle()</span>
-                    <span style="font-size: 13px; color: #8c8c8c;">@GetGreeting()</span>
-                </div>
+                <span style="font-size: 18px; font-weight: 600; color: #1a1a1a;">The Translation Gate</span>
             </div>
-            <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 16px;">
                 <Input TValue="string"
-                       Placeholder="Search anything..."
-                       Size="@InputSize.Small"
-                       Style="width: 240px; border-radius: 20px; background: #f5f7fa;" />
-                <Button Type="@ButtonType.Text" Size="@ButtonSize.Small" Style="color: #595959;">
-                    <Icon Type="reload" />
-                </Button>
+                       Placeholder="Search..."
+                       Prefix="@SearchIcon"
+                       Size="@InputSize.Default"
+                       Style="width: 280px; border-radius: 8px;" />
                 <Badge Count="3" Style="cursor: pointer;">
-                    <Button Type="@ButtonType.Text" Icon="bell" Size="@ButtonSize.Small" Style="color: #595959;" />
+                    <Icon Type="bell" Style="font-size: 20px; color: #595959;" />
                 </Badge>
-                <Badge Dot Style="cursor: pointer;">
-                    <Button Type="@ButtonType.Text" Icon="message" Size="@ButtonSize.Small" Style="color: #595959;" />
-                </Badge>
-                <Dropdown>
-                    <Overlay>
-                        <Menu>
-                            <MenuItem Key="profile" Icon="user">Profile</MenuItem>
-                            <MenuItem Key="settings" Icon="setting">Settings</MenuItem>
-                            <MenuDivider />
-                            <MenuItem Key="logout" Icon="logout" OnClick="Logout">Logout</MenuItem>
-                        </Menu>
-                    </Overlay>
-                    <ChildContent>
-                        <div style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 8px; border-radius: 6px;">
-                            <Avatar Style="background: #1a73e8; font-weight: 500;">SR</Avatar>
-                            <span style="font-weight: 500; font-size: 14px; color: #262626;">Sarah</span>
-                            <Icon Type="down" Style="font-size: 10px; color: #8c8c8c;" />
-                        </div>
-                    </ChildContent>
-                </Dropdown>
+                <div style="cursor: pointer;" @onclick="@(() => NavigateTo("/profile"))">
+                    <Avatar Style="background: #3b82f6; font-weight: 500;">SR</Avatar>
+                </div>
             </div>
         </Header>
         <Content Style="padding: 24px; background: #f8fafc; min-height: calc(100vh - 64px);">
@@ -135,6 +182,20 @@
 
 @code {
     private bool collapsed = false;
+    private UserRole currentUserRole = UserRole.Translator;
+
+    private RenderFragment settingsTitleTemplate => __builder =>
+    {
+        <span>
+            <Icon Type="setting" />
+            <span>Settings</span>
+        </span>;
+    };
+
+    private RenderFragment SearchIcon => __builder =>
+    {
+        <Icon Type="search" Style="color: #8c8c8c;" />
+    };
 
     private void ToggleCollapse()
     {
@@ -143,16 +204,40 @@
 
     private string GetCollapseIcon() => collapsed ? "menu-unfold" : "menu-fold";
 
+    private void SetRoleToTranslator()
+    {
+        currentUserRole = UserRole.Translator;
+    }
+
+    private void SetRoleToManager()
+    {
+        currentUserRole = UserRole.Manager;
+    }
+
+    private void NavigateTo(string url)
+    {
+        Navigation.NavigateTo(url);
+    }
+
+    private async Task HandleLogout()
+    {
+        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "token");
+        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "user");
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+
     private string GetMenuKey()
     {
         var uri = Navigation.ToBaseRelativePath(Navigation.Uri).ToLower();
         return uri switch
         {
             "" or "dashboard" => "dashboard",
-            "tasks" => "tasks",
+            "tasks" or "my-tasks" => currentUserRole == UserRole.Manager ? "tasks" : "my-tasks",
             "translators" => "translators",
             "users" => "users",
-            "reviews" => "reviews",
+            "reviews" or "my-reviews" => currentUserRole == UserRole.Manager ? "reviews" : "my-reviews",
+            "calendar" => "calendar",
+            "profile" => "profile",
             _ => "dashboard"
         };
     }
@@ -163,23 +248,28 @@
         return uri switch
         {
             "" or "dashboard" => "Dashboard",
-            "tasks" => "Tasks",
+            "tasks" or "my-tasks" => currentUserRole == UserRole.Manager ? "Tasks" : "My Tasks",
             "translators" => "Translators",
             "users" => "Users",
-            "reviews" => "Reviews",
+            "reviews" or "my-reviews" => currentUserRole == UserRole.Manager ? "Reviews" : "My Reviews",
+            "calendar" => "Calendar",
+            "profile" => "Profile",
             _ => "Dashboard"
         };
-    }
-
-    private string GetGreeting()
-    {
-        var hour = DateTime.Now.Hour;
-        var greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-        return $"{greeting}, Sarah";
     }
 
     private void Logout()
     {
         Navigation.NavigateTo("/login");
+    }
+
+    public void Dispose()
+    {
+    }
+
+    public enum UserRole
+    {
+        Translator,
+        Manager
     }
 }
