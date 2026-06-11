@@ -8,321 +8,92 @@
 
 <PageTitle>Users - TMS</PageTitle>
 
-<style>
-    .users-page { padding: 0 24px 24px; max-width: 1400px; margin: 0 auto; }
-
-    .hero-section {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 20px;
-        padding: 40px;
-        margin: 24px 0 32px;
-        color: white;
-        position: relative;
-        overflow: hidden;
-    }
-    .hero-section::before {
-        content: ''; position: absolute; top: -50%; right: -10%;
-        width: 300px; height: 300px; background: rgba(255,255,255,0.08);
-        border-radius: 50%;
-    }
-    .hero-section h1 { font-size: 32px; font-weight: 700; margin: 0 0 8px; }
-    .hero-section p { font-size: 16px; opacity: 0.9; margin: 0 0 24px; }
-
-    .stats-row { margin-bottom: 32px; }
-    .stat-card-inner {
-        background: white; border-radius: 16px; padding: 24px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.04);
-        transition: transform 0.3s;
-    }
-    .stat-card-inner:hover { transform: translateY(-4px); }
-    .stat-icon-wrap {
-        width: 48px; height: 48px; border-radius: 12px;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 22px; margin-bottom: 12px;
-    }
-    .stat-val { font-size: 28px; font-weight: 700; color: #1a202c; margin: 0; }
-    .stat-lbl { font-size: 14px; color: #718096; margin: 4px 0 0; }
-
-    .search-row { margin-bottom: 24px; }
-
-    .user-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
-
-    .user-card-modern {
-        background: white; border-radius: 20px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-        border: 1px solid rgba(0,0,0,0.04);
-        transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
-        position: relative; overflow: hidden;
-        padding: 24px;
-    }
-    .user-card-modern:hover {
-        transform: translateY(-6px);
-        box-shadow: 0 20px 40px rgba(0,0,0,0.12);
-    }
-    .user-card-modern::before {
-        content: ''; position: absolute; top: 0; left: 0; right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #667eea, #764ba2);
-        opacity: 0; transition: opacity 0.3s;
-    }
-    .user-card-modern:hover::before { opacity: 1; }
-
-    .card-header-row {
-        display: flex; justify-content: space-between; align-items: flex-start;
-        margin-bottom: 16px;
-    }
-    .avatar-gradient {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        color: white; font-weight: 700;
-    }
-
-    .card-body h3 { font-size: 18px; font-weight: 600; color: #1a202c; margin: 0 0 4px; }
-    .card-body .email { font-size: 14px; color: #718096; margin: 0 0 16px; }
-
-    .badge-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-
-    .card-footer-row {
-        display: flex; justify-content: space-between; align-items: center;
-        padding-top: 16px; border-top: 1px solid #edf2f7;
-    }
-    .joined-text { font-size: 13px; color: #a0aec0; }
-
-    .empty-wrap { text-align: center; padding: 80px 20px; }
-    .empty-title { font-size: 20px; font-weight: 600; color: #1a202c; margin-bottom: 8px; }
-    .empty-desc { color: #718096; margin-bottom: 24px; }
-
-    .drawer-form { padding: 8px 4px; }
-    .drawer-form .ant-form-item { margin-bottom: 20px; }
-
-    .delete-modal-content { text-align: center; padding: 16px 8px; }
-    .delete-icon-circle {
-        width: 72px; height: 72px; border-radius: 50%;
-        background: linear-gradient(135deg, #fed7d7, #feb2b2);
-        display: flex; align-items: center; justify-content: center;
-        margin: 0 auto 20px; font-size: 32px;
-    }
-    .delete-title { font-size: 20px; font-weight: 700; color: #1a202c; margin-bottom: 8px; }
-    .delete-desc { color: #718096; margin-bottom: 24px; }
-
-    @@media (max-width: 768px) {
-        .hero-section { padding: 24px; }
-        .hero-section h1 { font-size: 24px; }
-        .user-grid { grid-template-columns: 1fr; }
-    }
-</style>
-
-<div class="users-page">
-    <!-- Hero -->
-    <div class="hero-section">
-        <h1>Users Management</h1>
-        <p>Manage your team members, roles, and permissions</p>
-        <Button Type="@ButtonType.Primary" Size="@ButtonSize.Large"
-                Style="background: white; color: #667eea; border: none; font-weight: 600; border-radius: 12px; height: 48px; padding: 0 28px;"
-                OnClick="ShowAddDrawer">
-            <Icon Type="plus" /> Add New User
-        </Button>
-    </div>
-
-    <!-- Stats -->
-    <Row Gutter="24" Class="stats-row">
-        <Col Xs="12" Sm="12" Md="6">
-            <div class="stat-card-inner">
-                <div class="stat-icon-wrap" style="background: linear-gradient(135deg, #667eea20, #764ba220); color: #667eea;">
-                    <Icon Type="team" />
-                </div>
-                <div class="stat-val">@users.Count</div>
-                <div class="stat-lbl">Total Users</div>
-            </div>
-        </Col>
-        <Col Xs="12" Sm="12" Md="6">
-            <div class="stat-card-inner">
-                <div class="stat-icon-wrap" style="background: linear-gradient(135deg, #48bb7820, #38a16920); color: #48bb78;">
-                    <Icon Type="check-circle" />
-                </div>
-                <div class="stat-val">@users.Count(u => u.IsActive)</div>
-                <div class="stat-lbl">Active Users</div>
-            </div>
-        </Col>
-        <Col Xs="12" Sm="12" Md="6">
-            <div class="stat-card-inner">
-                <div class="stat-icon-wrap" style="background: linear-gradient(135deg, #ed893620, #dd6b2020); color: #ed8936;">
-                    <Icon Type="crown" />
-                </div>
-                <div class="stat-val">@users.Count(u => u.Role == UserRole.Admin)</div>
-                <div class="stat-lbl">Admins</div>
-            </div>
-        </Col>
-        <Col Xs="12" Sm="12" Md="6">
-            <div class="stat-card-inner">
-                <div class="stat-icon-wrap" style="background: linear-gradient(135deg, #4299e120, #3182ce20); color: #4299e1;">
-                    <Icon Type="calendar" />
-                </div>
-                <div class="stat-val">@users.Count(u => u.CreatedAt.Date == DateTime.Today)</div>
-                <div class="stat-lbl">New Today</div>
-            </div>
-        </Col>
-    </Row>
-
-    <!-- Search -->
-    <div class="search-row">
-        <Input Placeholder="Search users by name or email..."
-               Prefix="search"
-               Size="@InputSize.Large"
-               Style="border-radius: 14px;"
-               @bind-Value="searchTerm"
-               OnChange="OnSearchChange" />
-    </div>
-
-    <!-- Grid -->
-    @if (loading)
-    {
-        <div style="text-align: center; padding: 60px;">
-            <Spin Size="@SpinSize.Large" Tip="Loading users..." />
-        </div>
-    }
-    else if (!filteredUsers.Any())
-    {
-        <div class="empty-wrap">
-            <Empty Image="Empty.PRESENTED_IMAGE_SIMPLE"
-                   Description="No users found">
-                <Button Type="@ButtonType.Primary" OnClick="ShowAddDrawer">Add New User</Button>
-            </Empty>
-        </div>
-    }
-    else
-    {
-        <div class="user-grid">
-            @foreach (var user in filteredUsers)
-            {
-                <div class="user-card-modern">
-                    <div class="card-header-row">
-                        <Avatar Size="@AvatarSize.Large" Class="avatar-gradient">
-                            @(user.Name?.Substring(0, 1).ToUpper())
-                        </Avatar>
-                        <Dropdown Trigger="@(new[] { TriggerType.Click })"
-                                  Overlay="@menuOverlay(user)">
-                            <Button Type="@ButtonType.Text" Icon="more" />
-                        </Dropdown>
-                    </div>
-                    <div class="card-body">
-                        <h3>@user.Name</h3>
-                        <p class="email">@user.Email</p>
-                        <div class="badge-row">
-                            <Tag Color="@GetRoleColor(user.Role.ToString())"
-                                 Style="border-radius: 20px; padding: 4px 14px; font-weight: 600;">
-                                @user.Role.ToString()
-                            </Tag>
-                            <Tag Color="@(user.IsActive ? "green" : "red")"
-                                 Style="border-radius: 20px; padding: 4px 14px; font-weight: 600;">
-                                @(user.IsActive ? "Active" : "Inactive")
-                            </Tag>
-                        </div>
-                    </div>
-                    <div class="card-footer-row">
-                        <span class="joined-text">Joined @user.CreatedAt.ToString("MMM dd, yyyy")</span>
-                        <Space>
-                            <Button Type="@ButtonType.Primary" Ghost Size="@ButtonSize.Small"
-                                    Shape="@ButtonShape.Round" Icon="edit"
-                                    OnClick="() => ShowEditDrawer(user)">Edit</Button>
-                            <Button Danger Size="@ButtonSize.Small"
-                                    Shape="@ButtonShape.Round" Icon="delete"
-                                    OnClick="() => ConfirmDelete(user)">Delete</Button>
-                        </Space>
-                    </div>
-                </div>
-            }
-        </div>
-    }
+<div class="page-header">
+    <h1>Users Management</h1>
+    <Button Type="@ButtonType.Primary" Icon="plus" Size="@ButtonSize.Large" OnClick="ShowAddModal">
+        Add New User
+    </Button>
 </div>
 
-<!-- Drawer for Add/Edit -->
-<Drawer Title="@(isEditMode ? "Edit User" : "Add New User")"
-        Placement="@DrawerPlacement.Right"
-        Width="480"
-        @bind-Visible="@drawerVisible"
-        OnClose="CloseDrawer">
-    <div class="drawer-form">
-        <Form Model="@currentUser" Layout="@FormLayout.Vertical">
-            <FormItem Label="Full Name">
-                <Input @bind-Value="@currentUser.Name" Placeholder="Enter user's full name" Size="@InputSize.Large" />
-            </FormItem>
-            <FormItem Label="Email Address">
-                <Input Type="email" @bind-Value="@currentUser.Email" Placeholder="Enter email address" Size="@InputSize.Large" />
-            </FormItem>
-            @if (!isEditMode)
-            {
-                <FormItem Label="Password">
-                    <InputPassword @bind-Value="@currentUser.Password" Placeholder="Create a password" Size="@InputSize.Large" />
-                </FormItem>
-            }
-            <FormItem Label="Role">
-                <Select @bind-Value="@currentUser.Role" TItemValue="UserRole" TItem="UserRole"
-                        Placeholder="Select role" Size="@InputSize.Large">
-                    <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.Admin" Label="Admin" />
-                    <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.Manager" Label="Manager" />
-                    <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.Translator" Label="Translator" />
-                </Select>
-            </FormItem>
-            <FormItem Label="Status">
-                <Switch @bind-Value="@currentUser.IsActive" CheckedChildren="Active" UnCheckedChildren="Inactive" />
-            </FormItem>
-        </Form>
-    </div>
-    <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 24px; border-top: 1px solid #f0f0f0; background: white;">
-        <Button Type="@ButtonType.Primary" Block Size="@ButtonSize.Large"
-                Style="border-radius: 12px; height: 48px; font-weight: 600;"
-                OnClick="HandleSubmit">
-            @(isEditMode ? "Update User" : "Create User")
-        </Button>
-        <Button Block Size="@ButtonSize.Large"
-                Style="border-radius: 12px; height: 48px; margin-top: 12px;"
-                OnClick="CloseDrawer">
-            Cancel
-        </Button>
-    </div>
-</Drawer>
+<Card Bordered="false" Class="modern-card" Style="margin-top: 24px;">
+    <Table DataSource="@users" Loading="@loading" TItem="UserDto" RowKey="x => x.Id">
+        <Column Title="Name" @bind-Field="@context.Name" Sortable>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <Avatar Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    @context.Name?.Substring(0, 1).ToUpper()
+                </Avatar>
+                <span style="font-weight: 500;">@context.Name</span>
+            </div>
+        </Column>
+        <Column Title="Email" @bind-Field="@context.Email" />
+        <Column Title="Role" @bind-Field="@context.Role">
+            <Tag Color="@GetRoleColor(context.Role.ToString())">@context.Role.ToString()</Tag>
+        </Column>
+        <Column Title="Status" @bind-Field="@context.IsActive">
+            <Tag Color="@(context.IsActive ? "green" : "red")">
+                @(context.IsActive ? "Active" : "Inactive")
+            </Tag>
+        </Column>
+        <Column Title="Created" @bind-Field="@context.CreatedAt">
+            @context.CreatedAt.ToString("yyyy-MM-dd")
+        </Column>
+        <ActionColumn Title="Actions">
+            <Space>
+                <SpaceItem>
+                    <Button Type="@ButtonType.Link" Icon="edit" OnClick="() => ShowEditModal(context)">Edit</Button>
+                </SpaceItem>
+                <SpaceItem>
+                    <Popconfirm Title="Are you sure you want to delete this user?"
+                                OnConfirm="() => DeleteUser(context.Id)"
+                                OkText="Yes"
+                                CancelText="No">
+                        <Button Type="@ButtonType.Link" Danger Icon="delete">Delete</Button>
+                    </Popconfirm>
+                </SpaceItem>
+            </Space>
+        </ActionColumn>
+    </Table>
+</Card>
 
-<!-- Delete Confirmation Modal -->
-<Modal Visible="@deleteModalVisible"
-       OnCancel="() => deleteModalVisible = false"
-       Footer="null"
-       Width="420"
-       Centered="true"
-       Closable="false">
-    <div class="delete-modal-content">
-        <div class="delete-icon-circle">&#x1f5d1;</div>
-        <div class="delete-title">Delete User?</div>
-        <div class="delete-desc">
-            Are you sure you want to delete <strong>@userToDelete?.Name</strong>? This action cannot be undone.
-        </div>
-        <Row Gutter="16">
-            <Col Span="12">
-                <Button Block Size="@ButtonSize.Large" Shape="@ButtonShape.Round"
-                        OnClick="() => deleteModalVisible = false">
-                    Cancel
-                </Button>
-            </Col>
-            <Col Span="12">
-                <Button Block Danger Type="@ButtonType.Primary" Size="@ButtonSize.Large" Shape="@ButtonShape.Round"
-                        OnClick="ExecuteDelete">
-                    Delete
-                </Button>
-            </Col>
-        </Row>
-    </div>
+<Modal Title="@(isEditMode ? "Edit User" : "Add New User")"
+       @bind-Visible="@modalVisible"
+       OnOk="HandleSubmit"
+       OnCancel="HandleCancel"
+       OkText="@(isEditMode ? "Update" : "Create")"
+       Width="600">
+    <Form Model="@currentUser" LabelCol="new ColLayoutParam { Span = 6 }" WrapperCol="new ColLayoutParam { Span = 18 }">
+        <FormItem Label="Name">
+            <Input @bind-Value="@currentUser.Name" Placeholder="Enter user name" />
+        </FormItem>
+        <FormItem Label="Email">
+            <Input @bind-Value="@currentUser.Email" Placeholder="Enter email address" />
+        </FormItem>
+        @if (!isEditMode)
+        {
+            <FormItem Label="Password">
+                <InputPassword @bind-Value="@currentUser.Password" Placeholder="Enter password" />
+            </FormItem>
+        }
+        <FormItem Label="Role">
+            <Select @bind-Value="@currentUser.Role" TItemValue="UserRole" TItem="UserRole" Placeholder="Select role">
+                <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.Admin" Label="Admin" />
+                <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.Manager" Label="Manager" />
+                <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.Translator" Label="Translator" />
+            </Select>
+        </FormItem>
+        <FormItem Label="Status">
+            <Switch @bind-Value="@currentUser.IsActive" CheckedChildren="Active" UnCheckedChildren="Inactive" />
+        </FormItem>
+    </Form>
 </Modal>
 
 @code {
     private List<UserDto> users = new();
-    private List<UserDto> filteredUsers = new();
     private bool loading = true;
-    private bool drawerVisible = false;
+    private bool modalVisible = false;
     private bool isEditMode = false;
-    private bool deleteModalVisible = false;
     private CreateUserDto currentUser = new();
     private string editUserId = string.Empty;
-    private UserDto? userToDelete;
-    private string searchTerm = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -336,7 +107,6 @@
         {
             var response = await Http.GetFromJsonAsync<List<UserDto>>("/api/users");
             users = response ?? new List<UserDto>();
-            FilterUsers();
         }
         catch (Exception ex)
         {
@@ -346,39 +116,17 @@
         {
             loading = false;
         }
-    }
+    }   
 
-    private void OnSearchChange()
-    {
-        FilterUsers();
-    }
-
-    private void FilterUsers()
-    {
-        if (string.IsNullOrWhiteSpace(searchTerm))
-        {
-            filteredUsers = users.ToList();
-        }
-        else
-        {
-            var term = searchTerm.ToLower();
-            filteredUsers = users.Where(u =>
-                u.Name.ToLower().Contains(term) ||
-                u.Email.ToLower().Contains(term) ||
-                u.Role.ToString().ToLower().Contains(term)
-            ).ToList();
-        }
-    }
-
-    private void ShowAddDrawer()
+    private void ShowAddModal()
     {
         isEditMode = false;
         currentUser = new CreateUserDto { IsActive = true, Role = UserRole.Translator };
         editUserId = string.Empty;
-        drawerVisible = true;
+        modalVisible = true;
     }
 
-    private void ShowEditDrawer(UserDto user)
+    private void ShowEditModal(UserDto user)
     {
         isEditMode = true;
         editUserId = user.Id;
@@ -390,12 +138,7 @@
             IsActive = user.IsActive,
             Password = string.Empty
         };
-        drawerVisible = true;
-    }
-
-    private void CloseDrawer()
-    {
-        drawerVisible = false;
+        modalVisible = true;
     }
 
     private async Task HandleSubmit()
@@ -415,10 +158,10 @@
                 if (response.IsSuccessStatusCode)
                 {
                     Message.Success("User updated successfully!");
-                    drawerVisible = false;
+                    modalVisible = false;
                     await LoadUsers();
                 }
-                else
+                else 
                 {
                     Message.Error("Failed to update user");
                 }
@@ -429,7 +172,7 @@
                 if (response.IsSuccessStatusCode)
                 {
                     Message.Success("User created successfully!");
-                    drawerVisible = false;
+                    modalVisible = false;
                     await LoadUsers();
                 }
                 else
@@ -444,19 +187,16 @@
         }
     }
 
-    private void ConfirmDelete(UserDto user)
+    private void HandleCancel()
     {
-        userToDelete = user;
-        deleteModalVisible = true;
+        modalVisible = false;
     }
 
-    private async Task ExecuteDelete()
+    private async Task DeleteUser(string userId)
     {
-        if (userToDelete == null) return;
-        deleteModalVisible = false;
         try
         {
-            var response = await Http.DeleteAsync($"/api/users/{userToDelete.Id}");
+            var response = await Http.DeleteAsync($"/api/users/{userId}");
             if (response.IsSuccessStatusCode)
             {
                 Message.Success("User deleted successfully!");
@@ -471,48 +211,6 @@
         {
             Message.Error($"Error: {ex.Message}");
         }
-        finally
-        {
-            userToDelete = null;
-        }
-    }
-
-    private RenderFragment menuOverlay(UserDto user)
-    {
-        return builder =>
-        {
-            builder.OpenComponent<Menu>(0);
-            builder.AddAttribute(1, "Mode", MenuMode.Vertical);
-            builder.AddAttribute(2, "Selectable", false);
-            builder.AddAttribute(3, "ChildContent", (RenderFragment)(b =>
-            {
-                b.OpenComponent<MenuItem>(4);
-                b.AddAttribute(5, "Key", "edit");
-                b.AddAttribute(6, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, () => ShowEditDrawer(user)));
-                b.AddAttribute(7, "ChildContent", (RenderFragment)(c =>
-                {
-                    c.OpenComponent<Icon>(8);
-                    c.AddAttribute(9, "Type", "edit");
-                    c.CloseComponent();
-                    c.AddContent(10, " Edit");
-                }));
-                b.CloseComponent();
-
-                b.OpenComponent<MenuItem>(11);
-                b.AddAttribute(12, "Key", "delete");
-                b.AddAttribute(13, "Danger", true);
-                b.AddAttribute(14, "OnClick", EventCallback.Factory.Create<MouseEventArgs>(this, () => ConfirmDelete(user)));
-                b.AddAttribute(15, "ChildContent", (RenderFragment)(c =>
-                {
-                    c.OpenComponent<Icon>(16);
-                    c.AddAttribute(17, "Type", "delete");
-                    c.CloseComponent();
-                    c.AddContent(18, " Delete");
-                }));
-                b.CloseComponent();
-            }));
-            builder.CloseComponent();
-        };
     }
 
     private string GetRoleColor(string role)
