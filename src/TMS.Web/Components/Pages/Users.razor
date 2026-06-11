@@ -2,58 +2,88 @@
 @rendermode InteractiveServer
 @using TMS.Core.DTOs
 @using TMS.Core.Enums
-@using System.Net.Http.Json
-@inject HttpClient Http
-@inject MessageService Message
 
 <PageTitle>Users - TMS</PageTitle>
 
-<div class="page-header">
-    <h1>Users Management</h1>
-    <Button Type="@ButtonType.Primary" Icon="plus" Size="@ButtonSize.Large" OnClick="ShowAddModal">
-        Add New User
-    </Button>
-</div>
+<Space Direction="SpaceDirection.Vertical" Size="SpaceSize.Middle" Style="width: 100%;">
+    <!-- Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+        <div>
+            <TypographyTitle Level="3" Style="margin: 0;">Users Management</TypographyTitle>
+            <TypographyText Type="TextType.Secondary">Manage team members and their roles</TypographyText>
+        </div>
+        <Button Type="@ButtonType.Primary" Icon="plus" Size="@ButtonSize.Large" OnClick="ShowAddModal">
+            Add New User
+        </Button>
+    </div>
 
-<Card Bordered="false" Class="modern-card" Style="margin-top: 24px;">
-    <Table DataSource="@users" Loading="@loading" TItem="UserDto" RowKey="x => x.Id">
-        <Column Title="Name" @bind-Field="@context.Name" Sortable>
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <Avatar Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                    @context.Name?.Substring(0, 1).ToUpper()
-                </Avatar>
-                <span style="font-weight: 500;">@context.Name</span>
-            </div>
-        </Column>
-        <Column Title="Email" @bind-Field="@context.Email" />
-        <Column Title="Role" @bind-Field="@context.Role">
-            <Tag Color="@GetRoleColor(context.Role.ToString())">@context.Role.ToString()</Tag>
-        </Column>
-        <Column Title="Status" @bind-Field="@context.IsActive">
-            <Tag Color="@(context.IsActive ? "green" : "red")">
-                @(context.IsActive ? "Active" : "Inactive")
-            </Tag>
-        </Column>
-        <Column Title="Created" @bind-Field="@context.CreatedAt">
-            @context.CreatedAt.ToString("yyyy-MM-dd")
-        </Column>
-        <ActionColumn Title="Actions">
-            <Space>
-                <SpaceItem>
-                    <Button Type="@ButtonType.Link" Icon="edit" OnClick="() => ShowEditModal(context)">Edit</Button>
-                </SpaceItem>
-                <SpaceItem>
-                    <Popconfirm Title="Are you sure you want to delete this user?"
-                                OnConfirm="() => DeleteUser(context.Id)"
-                                OkText="Yes"
-                                CancelText="No">
-                        <Button Type="@ButtonType.Link" Danger Icon="delete">Delete</Button>
-                    </Popconfirm>
-                </SpaceItem>
-            </Space>
-        </ActionColumn>
-    </Table>
-</Card>
+    <!-- Stats Summary -->
+    <Row Gutter="16">
+        <Col Span="6" Xs="12" Lg="6">
+            <Card Bordered="false" Class="users-stat-card">
+                <Statistic Title="Total Users" Value="@users.Count" ValueStyle="color: #1890ff;" />
+            </Card>
+        </Col>
+        <Col Span="6" Xs="12" Lg="6">
+            <Card Bordered="false" Class="users-stat-card">
+                <Statistic Title="Active" Value="@users.Count(u => u.IsActive)" ValueStyle="color: #52c41a;" />
+            </Card>
+        </Col>
+        <Col Span="6" Xs="12" Lg="6">
+            <Card Bordered="false" Class="users-stat-card">
+                <Statistic Title="Inactive" Value="@users.Count(u => !u.IsActive)" ValueStyle="color: #ff4d4f;" />
+            </Card>
+        </Col>
+        <Col Span="6" Xs="12" Lg="6">
+            <Card Bordered="false" Class="users-stat-card">
+                <Statistic Title="Admins" Value="@users.Count(u => u.Role == UserRole.Admin)" ValueStyle="color: #faad14;" />
+            </Card>
+        </Col>
+    </Row>
+
+    <!-- Users Table -->
+    <Card Bordered="false" Class="users-table-card" Title="All Users">
+        <Table DataSource="@users" Loading="@loading" TItem="UserDto" RowKey="x => x.Id">
+            <Column Title="Name" @bind-Field="@context.Name" Sortable>
+                <Space>
+                    <SpaceItem>
+                        <Avatar Style="background: #1890ff;">
+                            @context.Name?.Substring(0, 1).ToUpper()
+                        </Avatar>
+                    </SpaceItem>
+                    <SpaceItem>
+                        <TypographyText Strong>@context.Name</TypographyText>
+                    </SpaceItem>
+                </Space>
+            </Column>
+            <Column Title="Email" @bind-Field="@context.Email" />
+            <Column Title="Role" @bind-Field="@context.Role">
+                <Tag Color="@GetRoleColor(context.Role.ToString())">@context.Role.ToString()</Tag>
+            </Column>
+            <Column Title="Status" @bind-Field="@context.IsActive">
+                <Badge Status="@(context.IsActive ? BadgeStatus.Success : BadgeStatus.Error)" Text="@(context.IsActive ? "Active" : "Inactive")" />
+            </Column>
+            <Column Title="Created" @bind-Field="@context.CreatedAt">
+                @context.CreatedAt.ToString("yyyy-MM-dd")
+            </Column>
+            <ActionColumn Title="Actions" Width="150">
+                <Space>
+                    <SpaceItem>
+                        <Button Type="@ButtonType.Primary" Ghost Icon="edit" Size="@ButtonSize.Small" OnClick="() => ShowEditModal(context)">Edit</Button>
+                    </SpaceItem>
+                    <SpaceItem>
+                        <Popconfirm Title="Are you sure you want to delete this user?"
+                                    OnConfirm="() => DeleteUser(context.Id)"
+                                    OkText="Yes"
+                                    CancelText="No">
+                            <Button Type="@ButtonType.Primary" Danger Icon="delete" Size="@ButtonSize.Small">Delete</Button>
+                        </Popconfirm>
+                    </SpaceItem>
+                </Space>
+            </ActionColumn>
+        </Table>
+    </Card>
+</Space>
 
 <Modal Title="@(isEditMode ? "Edit User" : "Add New User")"
        @bind-Visible="@modalVisible"
@@ -61,21 +91,21 @@
        OnCancel="HandleCancel"
        OkText="@(isEditMode ? "Update" : "Create")"
        Width="600">
-    <Form Model="@currentUser" LabelCol="new ColLayoutParam { Span = 6 }" WrapperCol="new ColLayoutParam { Span = 18 }">
+    <Form Model="@currentUser" Layout="@FormLayout.Vertical">
         <FormItem Label="Name">
-            <Input @bind-Value="@currentUser.Name" Placeholder="Enter user name" />
+            <Input @bind-Value="@currentUser.Name" Placeholder="Enter user name" Size="@InputSize.Large" />
         </FormItem>
         <FormItem Label="Email">
-            <Input @bind-Value="@currentUser.Email" Placeholder="Enter email address" />
+            <Input @bind-Value="@currentUser.Email" Placeholder="Enter email address" Size="@InputSize.Large" />
         </FormItem>
         @if (!isEditMode)
         {
             <FormItem Label="Password">
-                <InputPassword @bind-Value="@currentUser.Password" Placeholder="Enter password" />
+                <InputPassword @bind-Value="@currentUser.Password" Placeholder="Enter password" Size="@InputSize.Large" />
             </FormItem>
         }
         <FormItem Label="Role">
-            <Select @bind-Value="@currentUser.Role" TItemValue="UserRole" TItem="UserRole" Placeholder="Select role">
+            <Select @bind-Value="@currentUser.Role" TItemValue="UserRole" TItem="UserRole" Placeholder="Select role" Size="@InputSize.Large">
                 <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.Admin" Label="Admin" />
                 <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.Manager" Label="Manager" />
                 <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.Translator" Label="Translator" />
@@ -87,140 +117,3 @@
     </Form>
 </Modal>
 
-@code {
-    private List<UserDto> users = new();
-    private bool loading = true;
-    private bool modalVisible = false;
-    private bool isEditMode = false;
-    private CreateUserDto currentUser = new();
-    private string editUserId = string.Empty;
-
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadUsers();
-    }
-
-    private async Task LoadUsers()
-    {
-        loading = true;
-        try
-        {
-            var response = await Http.GetFromJsonAsync<List<UserDto>>("/api/users");
-            users = response ?? new List<UserDto>();
-        }
-        catch (Exception ex)
-        {
-            Message.Error($"Failed to load users: {ex.Message}");
-        }
-        finally
-        {
-            loading = false;
-        }
-    }   
-
-    private void ShowAddModal()
-    {
-        isEditMode = false;
-        currentUser = new CreateUserDto { IsActive = true, Role = UserRole.Translator };
-        editUserId = string.Empty;
-        modalVisible = true;
-    }
-
-    private void ShowEditModal(UserDto user)
-    {
-        isEditMode = true;
-        editUserId = user.Id;
-        currentUser = new CreateUserDto
-        {
-            Name = user.Name,
-            Email = user.Email,
-            Role = user.Role,
-            IsActive = user.IsActive,
-            Password = string.Empty
-        };
-        modalVisible = true;
-    }
-
-    private async Task HandleSubmit()
-    {
-        try
-        {
-            if (isEditMode)
-            {
-                var updateDto = new UpdateUserDto
-                {
-                    Name = currentUser.Name,
-                    Email = currentUser.Email,
-                    Role = currentUser.Role,
-                    IsActive = currentUser.IsActive
-                };
-                var response = await Http.PutAsJsonAsync($"/api/users/{editUserId}", updateDto);
-                if (response.IsSuccessStatusCode)
-                {
-                    Message.Success("User updated successfully!");
-                    modalVisible = false;
-                    await LoadUsers();
-                }
-                else 
-                {
-                    Message.Error("Failed to update user");
-                }
-            }
-            else
-            {
-                var response = await Http.PostAsJsonAsync("/api/users", currentUser);
-                if (response.IsSuccessStatusCode)
-                {
-                    Message.Success("User created successfully!");
-                    modalVisible = false;
-                    await LoadUsers();
-                }
-                else
-                {
-                    Message.Error("Failed to create user");
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Message.Error($"Error: {ex.Message}");
-        }
-    }
-
-    private void HandleCancel()
-    {
-        modalVisible = false;
-    }
-
-    private async Task DeleteUser(string userId)
-    {
-        try
-        {
-            var response = await Http.DeleteAsync($"/api/users/{userId}");
-            if (response.IsSuccessStatusCode)
-            {
-                Message.Success("User deleted successfully!");
-                await LoadUsers();
-            }
-            else
-            {
-                Message.Error("Failed to delete user");
-            }
-        }
-        catch (Exception ex)
-        {
-            Message.Error($"Error: {ex.Message}");
-        }
-    }
-
-    private string GetRoleColor(string role)
-    {
-        return role switch
-        {
-            "Admin" => "red",
-            "Manager" => "blue",
-            "Translator" => "green",
-            _ => "default"
-        };
-    }
-}

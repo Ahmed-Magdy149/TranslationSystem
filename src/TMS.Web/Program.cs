@@ -58,6 +58,9 @@ builder.Services.AddScoped(sp =>
     return new HttpClient { BaseAddress = new Uri(baseUrl) };
 });
 
+// Web Services
+builder.Services.AddScoped<TMS.Web.Services.IUserService, TMS.Web.Services.UserService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

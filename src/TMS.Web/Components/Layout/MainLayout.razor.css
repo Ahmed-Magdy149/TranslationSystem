@@ -1,3 +1,108 @@
+.sidebar-brand {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 12px;
+    border-bottom: 1px solid #f0f0f0;
+    overflow: hidden;
+    white-space: nowrap;
+    background: white;
+}
+
+.sidebar-brand-title {
+    color: #1a1a1a;
+    font-size: 15px;
+    font-weight: 700;
+    white-space: nowrap;
+    letter-spacing: -0.2px;
+}
+
+.sidebar-section-label {
+    display: block;
+    padding: 16px 20px 8px;
+    color: #8c8c8c;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.sidebar-menu {
+    background: transparent !important;
+    border-right: none !important;
+}
+
+.sidebar-menu .ant-menu-item {
+    margin: 4px 12px !important;
+    border-radius: 8px !important;
+    height: 40px !important;
+    line-height: 40px !important;
+    padding-left: 16px !important;
+}
+
+.sidebar-menu .ant-menu-item:hover {
+    background: #f0f7ff !important;
+    color: #1a73e8 !important;
+}
+
+.sidebar-menu .ant-menu-item-selected {
+    background: #e8f0fe !important;
+    color: #1a73e8 !important;
+    font-weight: 600 !important;
+}
+
+.sidebar-menu .ant-menu-item-selected::after {
+    display: none !important;
+}
+
+.sidebar-nav-section {
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.sidebar-account-section {
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.sidebar-footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 16px 20px;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: white;
+}
+
+.sidebar-footer-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+}
+
+.sidebar-footer-name {
+    color: #1a1a1a;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.sidebar-footer-role {
+    color: #8c8c8c;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.app-header {
+    background: white !important;
+}
+
 #blazor-error-ui {
     color-scheme: light only;
     background: lightyellow;
@@ -12,9 +117,9 @@
     z-index: 1000;
 }
 
-    #blazor-error-ui .dismiss {
-        cursor: pointer;
-        position: absolute;
-        right: 0.75rem;
-        top: 0.5rem;
-    }
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}

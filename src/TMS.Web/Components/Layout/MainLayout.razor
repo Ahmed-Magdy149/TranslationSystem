@@ -1,64 +1,127 @@
 ﻿@inherits LayoutComponentBase
+@inject NavigationManager Navigation
 
-<Layout Style="min-height: 100vh; background: #f0f2f5;">
-    <Sider Theme="SiderTheme.Dark"
+<Layout Style="min-height: 100vh; background: #f8fafc;">
+    <Sider Theme="@SiderTheme.Dark"
            Collapsible
-           Breakpoint="BreakpointType.Md"
            CollapsedWidth="80"
-           Style="background: linear-gradient(180deg, #1a1f37 0%, #0f1322 100%); box-shadow: 4px 0 20px rgba(0,0,0,0.15);">
+           Style="background: #ffffff; border-right: 1px solid #e8e8e8;">
         <div class="sidebar-brand">
-            <div class="brand-icon">
-                <Icon Type="global" Theme="IconThemeType.Outline" Style="font-size: 28px; color: #4facfe;" />
-            </div>
-            <h3 class="brand-text">TMS</h3>
+            <Avatar Shape="@AvatarShape.Square" Size="@AvatarSize.Large" Style="background: #1a73e8; border-radius: 10px;">
+                <Icon Type="global" Style="font-size: 22px; color: white;" />
+            </Avatar>
+            @if (!collapsed)
+            {
+                <span class="sidebar-brand-title">The Translation Gate</span>
+            }
         </div>
-        <Menu Theme="MenuTheme.Dark"
-              Mode="MenuMode.Inline"
-              DefaultSelectedKeys="@(new[] {"1"})"
-              Style="background: transparent; border-right: none;">
-            <MenuItem Key="1" RouterLink="/" RouterMatch="NavLinkMatch.All" Class="nav-item-modern">
-                <Icon Type="dashboard" Theme="IconThemeType.Outline" />
-                <span>Dashboard</span>
-            </MenuItem>
-            <MenuItem Key="2" RouterLink="/tasks" Class="nav-item-modern">
-                <Icon Type="file-text" Theme="IconThemeType.Outline" />
-                <span>Tasks</span>
-            </MenuItem>
-            <MenuItem Key="3" RouterLink="/translators" Class="nav-item-modern">
-                <Icon Type="team" Theme="IconThemeType.Outline" />
-                <span>Translators</span>
-            </MenuItem>
-            <MenuItem Key="4" RouterLink="/users" Class="nav-item-modern">
-                <Icon Type="user" Theme="IconThemeType.Outline" />
-                <span>Users</span>
-            </MenuItem>
-            <MenuItem Key="5" RouterLink="/reviews" Class="nav-item-modern">
-                <Icon Type="star" Theme="IconThemeType.Outline" />
-                <span>Reviews</span>
-            </MenuItem>
-        </Menu>
+        <div class="sidebar-nav-section">
+            @if (!collapsed)
+            {
+                <span class="sidebar-section-label">NAVIGATION</span>
+            }
+            <Menu Theme="@MenuTheme.Light"
+                  Mode="@MenuMode.Inline"
+                  DefaultSelectedKeys="@(new[] { GetMenuKey() })"
+                  InlineCollapsed="collapsed"
+                  Class="sidebar-menu">
+                <MenuItem Key="dashboard" RouterLink="/dashboard">
+                    <Icon Type="dashboard" />
+                    <span>Dashboard</span>
+                </MenuItem>
+                <MenuItem Key="tasks" RouterLink="/tasks">
+                    <Icon Type="file-text" />
+                    <span>Tasks</span>
+                </MenuItem>
+                <MenuItem Key="translators" RouterLink="/translators">
+                    <Icon Type="team" />
+                    <span>Translators</span>
+                </MenuItem>
+                <MenuItem Key="users" RouterLink="/users">
+                    <Icon Type="user" />
+                    <span>Users</span>
+                </MenuItem>
+                <MenuItem Key="reviews" RouterLink="/reviews">
+                    <Icon Type="star" />
+                    <span>Reviews</span>
+                </MenuItem>
+            </Menu>
+        </div>
+        <div class="sidebar-account-section">
+            @if (!collapsed)
+            {
+                <span class="sidebar-section-label">ACCOUNT</span>
+            }
+            <Menu Theme="@MenuTheme.Light"
+                  Mode="@MenuMode.Inline"
+                  InlineCollapsed="collapsed"
+                  Class="sidebar-menu">
+                <MenuItem Key="profile">
+                    <Icon Type="profile" />
+                    <span>Profile</span>
+                </MenuItem>
+                <MenuItem Key="settings">
+                    <Icon Type="setting" />
+                    <span>Settings</span>
+                </MenuItem>
+            </Menu>
+        </div>
         <div class="sidebar-footer">
-            <p>v1.0.0</p>
+            <Avatar Style="background: #1a73e8;">SR</Avatar>
+            @if (!collapsed)
+            {
+                <div class="sidebar-footer-info">
+                    <span class="sidebar-footer-name">Sarah Reed</span>
+                    <span class="sidebar-footer-role">Project Manager</span>
+                </div>
+            }
         </div>
     </Sider>
-    <Layout Style="background: #f0f2f5;">
-        <Header Class="modern-header">
-            <div class="header-left">
-                <Breadcrumb>
-                    <BreadcrumbItem><Icon Type="home" Theme="IconThemeType.Outline" /> Home</BreadcrumbItem>
-                </Breadcrumb>
-            </div>
-            <div class="header-right">
-                <Badge Count="3" Dot="false">
-                    <Button Type="ButtonType.Text" Icon="bell" Size="ButtonSize.Large" Class="header-btn" />
-                </Badge>
-                <div class="user-profile">
-                    <Avatar Size="AvatarSize.Default" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">A</Avatar>
-                    <span class="user-name">Admin</span>
+    <Layout Style="background: #f8fafc;">
+        <Header Class="app-header" Style="background: white; padding: 0 24px; height: 64px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e8e8e8;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <Button Type="@ButtonType.Text" OnClick="ToggleCollapse" Style="padding: 4px 8px;">
+                    <Icon Type="@GetCollapseIcon()" Style="font-size: 16px; color: #595959;" />
+                </Button>
+                <div>
+                    <span style="font-size: 20px; font-weight: 600; color: #1a1a1a; display: block;">@GetPageTitle()</span>
+                    <span style="font-size: 13px; color: #8c8c8c;">@GetGreeting()</span>
                 </div>
             </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <Input TValue="string"
+                       Placeholder="Search anything..."
+                       Size="@InputSize.Small"
+                       Style="width: 240px; border-radius: 20px; background: #f5f7fa;" />
+                <Button Type="@ButtonType.Text" Size="@ButtonSize.Small" Style="color: #595959;">
+                    <Icon Type="reload" />
+                </Button>
+                <Badge Count="3" Style="cursor: pointer;">
+                    <Button Type="@ButtonType.Text" Icon="bell" Size="@ButtonSize.Small" Style="color: #595959;" />
+                </Badge>
+                <Badge Dot Style="cursor: pointer;">
+                    <Button Type="@ButtonType.Text" Icon="message" Size="@ButtonSize.Small" Style="color: #595959;" />
+                </Badge>
+                <Dropdown>
+                    <Overlay>
+                        <Menu>
+                            <MenuItem Key="profile" Icon="user">Profile</MenuItem>
+                            <MenuItem Key="settings" Icon="setting">Settings</MenuItem>
+                            <MenuDivider />
+                            <MenuItem Key="logout" Icon="logout" OnClick="Logout">Logout</MenuItem>
+                        </Menu>
+                    </Overlay>
+                    <ChildContent>
+                        <div style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 8px; border-radius: 6px;">
+                            <Avatar Style="background: #1a73e8; font-weight: 500;">SR</Avatar>
+                            <span style="font-weight: 500; font-size: 14px; color: #262626;">Sarah</span>
+                            <Icon Type="down" Style="font-size: 10px; color: #8c8c8c;" />
+                        </div>
+                    </ChildContent>
+                </Dropdown>
+            </div>
         </Header>
-        <Content Class="modern-content">
+        <Content Style="padding: 24px; background: #f8fafc; min-height: calc(100vh - 64px);">
             @Body
         </Content>
     </Layout>
@@ -69,3 +132,54 @@
     <a href="." class="reload">Reload</a>
     <span class="dismiss">&#x1F5D9;</span>
 </div>
+
+@code {
+    private bool collapsed = false;
+
+    private void ToggleCollapse()
+    {
+        collapsed = !collapsed;
+    }
+
+    private string GetCollapseIcon() => collapsed ? "menu-unfold" : "menu-fold";
+
+    private string GetMenuKey()
+    {
+        var uri = Navigation.ToBaseRelativePath(Navigation.Uri).ToLower();
+        return uri switch
+        {
+            "" or "dashboard" => "dashboard",
+            "tasks" => "tasks",
+            "translators" => "translators",
+            "users" => "users",
+            "reviews" => "reviews",
+            _ => "dashboard"
+        };
+    }
+
+    private string GetPageTitle()
+    {
+        var uri = Navigation.ToBaseRelativePath(Navigation.Uri).ToLower();
+        return uri switch
+        {
+            "" or "dashboard" => "Dashboard",
+            "tasks" => "Tasks",
+            "translators" => "Translators",
+            "users" => "Users",
+            "reviews" => "Reviews",
+            _ => "Dashboard"
+        };
+    }
+
+    private string GetGreeting()
+    {
+        var hour = DateTime.Now.Hour;
+        var greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+        return $"{greeting}, Sarah";
+    }
+
+    private void Logout()
+    {
+        Navigation.NavigateTo("/login");
+    }
+}

@@ -1,0 +1,70 @@
+/* Login Page Styles */
+.login-split {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.login-left {
+    flex: 1;
+    background: linear-gradient(180deg, #1a5a9e 0%, #0d3a66 100%);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 48px;
+    position: relative;
+    overflow: hidden;
+}
+
+.login-left::before {
+    content: '';
+    position: absolute;
+    top: -20%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+}
+
+.login-left::after {
+    content: '';
+    position: absolute;
+    bottom: -10%;
+    left: -5%;
+    width: 300px;
+    height: 300px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 50%;
+}
+
+.login-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 1;
+}
+
+.login-left-content {
+    max-width: 420px;
+    z-index: 1;
+}
+
+.login-right {
+    flex: 1;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+}
+
+.login-card {
+    border-radius: 16px;
+}
+
+@media (max-width: 768px) {
+    .login-left { display: none; }
+    .login-right { padding: 24px; }
+}
