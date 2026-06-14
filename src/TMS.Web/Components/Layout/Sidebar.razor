@@ -76,25 +76,12 @@
                     <Icon Type="file-text" />
                     <span>Tasks</span>
                 </MenuItem>
-                <MenuItem Key="translators" RouterLink="/translators">
-                    <Icon Type="team" />
-                    <span>Translators</span>
-                </MenuItem>
+       
                 <MenuItem Key="users" RouterLink="/users">
                     <Icon Type="user" />
                     <span>Users</span>
                 </MenuItem>
-                <MenuItem Key="reviews" RouterLink="/reviews">
-                    <Icon Type="star" />
-                    <span>Reviews</span>
-                </MenuItem>
-                <SubMenu Key="settings" TitleTemplate="@settingsTitleTemplate">
-                    <MenuItemGroup Title="Account">
-                        <MenuItem Key="profile" RouterLink="/profile">Personal Info</MenuItem>
-                        <MenuItem Key="password" RouterLink="/change-password">Password</MenuItem>
-                        <MenuItem Key="notifications" RouterLink="/notifications">Notifications</MenuItem>
-                    </MenuItemGroup>
-                </SubMenu>
+       
             </Menu>
         }
         else
@@ -110,7 +97,7 @@
                     <Icon Type="dashboard" />
                     <span>Dashboard</span>
                 </MenuItem>
-                <MenuItem Key="my-tasks" RouterLink="/my-tasks">
+                <MenuItem Key="my-tasks" RouterLink="/tasks">
                     <Icon Type="file-text" />
                     <span>My Tasks</span>
                 </MenuItem>

@@ -130,12 +130,13 @@
 @code {
     [Parameter] public string PageTitle { get; set; } = "Dashboard";
     [Parameter] public string PageSubtitle { get; set; } = "Welcome back";
-    [Parameter] public string UserName { get; set; } = "Sarah Reed";
-    [Parameter] public string UserInitials { get; set; } = "SR";
-    [Parameter] public string UserRole { get; set; } = "Project Manager";
-    [Parameter] public string UserAvatarColor { get; set; } = "#3b82f6";
     [Parameter] public EventCallback OnRefresh { get; set; }
     [Parameter] public EventCallback OnToggleSidebar { get; set; }
+
+    private string UserName { get; set; } = "User"; 
+    private string UserInitials { get; set; } = "U";
+    private string UserRole { get; set; } = "";
+    private string UserAvatarColor { get; set; } = "#3b82f6";
 
     private bool isProfileOpen = false;
     private bool isNotificationOpen = false;
@@ -144,7 +145,46 @@
     private int unreadCount = 8;
     private List<NotificationItem> notifications = new();
 
-    protected override void OnInitialized() => LoadSampleNotifications();
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserFromStorage();
+        LoadSampleNotifications();
+    }
+
+    private async Task LoadUserFromStorage()
+    {
+        try
+        {
+            var userJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user");
+            if (!string.IsNullOrEmpty(userJson))
+            {
+                var user = System.Text.Json.JsonSerializer.Deserialize<UserInfo>(userJson);
+                if (user != null)
+                {
+                    UserName = user.Name ?? "User";
+                    UserRole = user.Role ?? "";
+                    UserInitials = GetInitials(UserName);
+                    UserAvatarColor = GetAvatarColorFromName(UserName);
+                }
+            }
+        }
+        catch { }
+    }
+
+    private string GetInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "U";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2) return $"{parts[0][0]}{parts[^1][0]}".ToUpper();
+        return name[..Math.Min(2, name.Length)].ToUpper();
+    }
+
+    private string GetAvatarColorFromName(string name)
+    {
+        var colors = new[] { "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444", "#06b6d4" };
+        var hash = Math.Abs(name.GetHashCode());
+        return colors[hash % colors.Length];
+    }
 
     private void LoadSampleNotifications()
     {
@@ -199,5 +239,12 @@
         public string Icon { get; set; } = "";
         public string IconClass { get; set; } = "";
         public bool IsRead { get; set; }
+    }
+
+    public class UserInfo
+    {
+        public string Name { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Role { get; set; } = "";
     }
 }

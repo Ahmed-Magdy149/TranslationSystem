@@ -1,0 +1,18 @@
+<span class="tms-status @GetStatusClass()">
+    <span class="tms-status-dot"></span>
+    <span>@Text</span>
+</span>
+
+@code {
+    [Parameter] public string Status { get; set; } = "active";
+    [Parameter] public string Text { get; set; } = "";
+
+    private string GetStatusClass() => Status.ToLower() switch
+    {
+        "active" or "success" or "completed" => "tms-status-active",
+        "inactive" or "disabled" or "archived" => "tms-status-inactive",
+        "pending" or "waiting" or "in-progress" => "tms-status-pending",
+        "error" or "failed" or "rejected" => "tms-status-error",
+        _ => "tms-status-active"
+    };
+}

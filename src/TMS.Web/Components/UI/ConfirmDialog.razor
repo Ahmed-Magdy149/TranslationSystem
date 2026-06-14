@@ -1,0 +1,18 @@
+<Popconfirm Title="@Title"
+            OnConfirm="OnConfirm"
+            OkText="@OkText"
+            CancelText="@CancelText"
+            OkType="@OkType"
+            Placement="@OkPlacement">
+    @ChildContent
+</Popconfirm>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Are you sure?";
+    [Parameter] public string OkText { get; set; } = "Confirm";
+    [Parameter] public string CancelText { get; set; } = "Cancel";
+    [Parameter] public ButtonType OkType { get; set; } = ButtonType.Primary;
+    [Parameter] public Placement OkPlacement { get; set; } = Placement.TopRight;
+    [Parameter] public EventCallback OnConfirm { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; } = default!;
+}

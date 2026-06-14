@@ -1,6 +1,291 @@
 @page "/tasks"
+@rendermode InteractiveServer
+@using TMS.Core.Enums
+@using TMS.Web.Services
+@using TaskStatus = TMS.Core.Enums.TaskStatus
 
 <PageTitle>Tasks - TMS</PageTitle>
 
-<h1>Translation Tasks</h1>
-<p>Tasks management - Coming soon</p>
+<PageContainer>
+    <!-- Page Header -->
+    <AppPageHeader Title="Tasks"
+                   Subtitle="Manage translation tasks, assignments and deadlines"
+                   Breadcrumb="Tasks">
+        <Actions>
+            <Button Type="ButtonType.Primary" Icon="plus" OnClick="ShowAddDrawer">
+                Add Task
+            </Button>
+        </Actions>
+    </AppPageHeader>
+
+    <!-- Stats Cards -->
+    <div class="tasks-stats-grid">
+        <Card Bordered="false" Class="tms-card-stat">
+            <div class="tasks-stat-inner">
+                <div>
+                    <div class="tasks-stat-label">Total Tasks</div>
+                    <div class="tasks-stat-value">@allTasks.Count</div>
+                </div>
+                <div class="tms-card-icon tms-card-icon-blue">
+                    <Icon Type="project" />
+                </div>
+            </div>
+        </Card>
+        <Card Bordered="false" Class="tms-card-stat">
+            <div class="tasks-stat-inner">
+                <div>
+                    <div class="tasks-stat-label">In Progress</div>
+                    <div class="tasks-stat-value" style="color:#3b82f6;">@allTasks.Count(t => t.Status == TaskStatus.InProgress)</div>
+                </div>
+                <div class="tms-card-icon tms-card-icon-blue">
+                    <Icon Type="sync" />
+                </div>
+            </div>
+        </Card>
+        <Card Bordered="false" Class="tms-card-stat">
+            <div class="tasks-stat-inner">
+                <div>
+                    <div class="tasks-stat-label">Pending</div>
+                    <div class="tasks-stat-value" style="color:#f59e0b;">@allTasks.Count(t => t.Status == TaskStatus.Pending)</div>
+                </div>
+                <div class="tms-card-icon tms-card-icon-yellow">
+                    <Icon Type="clock-circle" />
+                </div>
+            </div>
+        </Card>
+        <Card Bordered="false" Class="tms-card-stat">
+            <div class="tasks-stat-inner">
+                <div>
+                    <div class="tasks-stat-label">Approved</div>
+                    <div class="tasks-stat-value" style="color:#10b981;">@allTasks.Count(t => t.Status == TaskStatus.Approved)</div>
+                </div>
+                <div class="tms-card-icon tms-card-icon-green">
+                    <Icon Type="check-circle" />
+                </div>
+            </div>
+        </Card>
+    </div>
+
+    <!-- Filters Bar -->
+    <Card Bordered="false" Style="margin-bottom:20px;">
+        <div class="tasks-filter-bar">
+            <Input Placeholder="Search tasks..."
+                   Prefix="@SearchIconFrag"
+                   Style="width:280px;"
+                   @bind-Value="searchText"
+                   @oninput="OnSearch" />
+            <Select TItemValue="string" TItem="string"
+                    Style="width:180px;"
+                    @bind-Value="selectedStatus"
+                    Placeholder="Filter by Status"
+                    AllowClear="true"
+                    OnSelectedItemChanged="OnFilterChanged">
+                <SelectOption TItemValue="string" TItem="string" Value="@("Pending")" Label="Pending" />
+                <SelectOption TItemValue="string" TItem="string" Value="@("Assigned")" Label="Assigned" />
+                <SelectOption TItemValue="string" TItem="string" Value="@("InProgress")" Label="In Progress" />
+                <SelectOption TItemValue="string" TItem="string" Value="@("Submitted")" Label="Submitted" />
+                <SelectOption TItemValue="string" TItem="string" Value="@("Approved")" Label="Approved" />
+                <SelectOption TItemValue="string" TItem="string" Value="@("Rejected")" Label="Rejected" />
+            </Select>
+            <Select TItemValue="string" TItem="string"
+                    Style="width:200px;"
+                    @bind-Value="selectedUserId"
+                    Placeholder="Filter by User"
+                    AllowClear="true"
+                    OnSelectedItemChanged="OnFilterChanged">
+                @foreach (var u in users)
+                {
+                    <SelectOption TItemValue="string" TItem="string" Value="@u.Id" Label="@u.Name" />
+                }
+            </Select>
+            @if (!string.IsNullOrEmpty(searchText) || !string.IsNullOrEmpty(selectedStatus) || !string.IsNullOrEmpty(selectedUserId))
+            {
+                <Button OnClick="ClearFilters" Icon="close-circle">Clear</Button>
+            }
+        </div>
+    </Card>
+
+    <!-- Tasks Table -->
+    <Card Bordered="false">
+        <Table TItem="TaskWebDto"
+               DataSource="@filteredTasks"
+               Loading="@loading"
+               PageSize="10"
+               Bordered="false"
+               Size="@TableSize.Middle"
+               RowKey="x => x.Id">
+            <Column Title="Task Name" @bind-Field="@context.Title" Sortable Width="220">
+                <div class="tasks-name-cell">
+                    <div class="tasks-type-dot tasks-dot-@context.TaskType.ToLower()"></div>
+                    <div>
+                        <div class="tasks-task-name">@context.Title</div>
+                        <div class="tasks-task-type">@context.TaskType</div>
+                    </div>
+                </div>
+            </Column>
+            <Column Title="Assigned To" @bind-Field="@context.AssignedUserName" Width="160">
+                @if (!string.IsNullOrEmpty(context.AssignedUserName))
+                {
+                    <div class="tasks-user-cell">
+                        <Avatar Size="@AvatarSize.Small" Style="@GetAvatarStyle(context.AssignedUserName)">
+                            @context.AssignedUserName[0].ToString().ToUpper()
+                        </Avatar>
+                        <span>@context.AssignedUserName</span>
+                    </div>
+                }
+                else
+                {
+                    <span class="tasks-unassigned">Unassigned</span>
+                }
+            </Column>
+            <Column Title="File" @bind-Field="@context.FileName" Width="180">
+                @if (!string.IsNullOrEmpty(context.FileName))
+                {
+                    <div class="tasks-file-cell">
+                        <Icon Type="file-text" Style="color:#64748b;margin-right:6px;" />
+                        <div>
+                            <div class="tasks-file-name">@TruncateFileName(context.FileName)</div>
+                            <div class="tasks-file-size">@FormatFileSize(context.FileSizeBytes)</div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <span class="tasks-unassigned">No file</span>
+                }
+            </Column>
+            <Column Title="Words" @bind-Field="@context.WordCount" Sortable Width="100">
+                <span class="tasks-word-count">@context.WordCount.ToString("N0")</span>
+            </Column>
+            <Column Title="Est. Time" @bind-Field="@context.EstimatedHours" Width="120">
+                <span class="tasks-est-time">@FormatEstTime(context.EstimatedHours, context.EstimatedMinutes)</span>
+            </Column>
+            <Column Title="Status" @bind-Field="@context.Status" Sortable Width="130">
+                <Tag Color="@GetStatusColor(context.Status)" Style="border-radius:12px;font-weight:500;">
+                    @GetStatusLabel(context.Status)
+                </Tag>
+            </Column>
+            <Column Title="Created" @bind-Field="@context.CreatedAt" Sortable Width="130">
+                <span class="tasks-date">@context.CreatedAt.ToString("MMM dd, yyyy")</span>
+            </Column>
+            <ActionColumn Title="" Width="90">
+                <div class="tms-row-actions">
+                    <Tooltip Title="Edit">
+                        <Button Type="ButtonType.Text" Icon="edit" OnClick="() => ShowEditDrawer(context)" />
+                    </Tooltip>
+                    <ConfirmDialog Title="Delete this task?"
+                                   OkText="Delete"
+                                   OkType="ButtonType.Primary"
+                                   OnConfirm="async () => await DeleteTask(context.Id)">
+                        <Tooltip Title="Delete">
+                            <Button Type="ButtonType.Text" Danger Icon="delete" />
+                        </Tooltip>
+                    </ConfirmDialog>
+                </div>
+            </ActionColumn>
+        </Table>
+    </Card>
+</PageContainer>
+
+<!-- Add / Edit Drawer -->
+<Drawer Visible="@drawerVisible"
+        Title="@(isEditMode ? "Edit Task" : "Add New Task")"
+        Width="520"
+        OnClose="CloseDrawer">
+    <ChildContent>
+        <Form Model="@formModel" Layout="@FormLayout.Vertical">
+
+            <FormItem Label="Task Name">
+                <Input @bind-Value="@formModel.Title" Placeholder="Enter task name" />
+            </FormItem>
+
+            <FormItem Label="Task Type">
+                <Select @bind-Value="@formModel.TaskType" TItemValue="string" TItem="string" Placeholder="Select task type">
+                    <SelectOption TItemValue="string" TItem="string" Value="@("Translation")" Label="Translation" />
+                    <SelectOption TItemValue="string" TItem="string" Value="@("Review")" Label="Review" />
+                    <SelectOption TItemValue="string" TItem="string" Value="@("Writing")" Label="Writing" />
+                    <SelectOption TItemValue="string" TItem="string" Value="@("Design")" Label="Design" />
+                    <SelectOption TItemValue="string" TItem="string" Value="@("Development")" Label="Development" />
+                </Select>
+            </FormItem>
+
+            <FormItem Label="Assign To">
+                <Select @bind-Value="@formModel.AssignedUserId" TItemValue="string" TItem="string"
+                        Placeholder="Select a user" AllowClear="true" EnableSearch>
+                    @foreach (var u in users)
+                    {
+                        <SelectOption TItemValue="string" TItem="string" Value="@u.Id" Label="@u.Name" />
+                    }
+                </Select>
+            </FormItem>
+
+            <FormItem Label="Upload File">
+                <div class="tasks-upload-area" @onclick="TriggerFileInput">
+                    <InputFile id="taskFileInput" OnChange="HandleFileUpload"
+                               style="display:none;" accept="*/*" />
+                    @if (!string.IsNullOrEmpty(formModel.FileName))
+                    {
+                        <div class="tasks-upload-success">
+                            <Icon Type="check-circle" Style="color:#10b981;font-size:24px;" />
+                            <div style="flex:1;">
+                                <div class="tasks-upload-fname">@formModel.FileName</div>
+                                <div class="tasks-upload-fsize">@FormatFileSize(formModel.FileSizeBytes) · @formModel.WordCount.ToString("N0") words</div>
+                            </div>
+                            <Button Type="@ButtonType.Text" Icon="delete" Size="@ButtonSize.Small"
+                                    OnClick="ClearFile" />
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="tasks-upload-placeholder">
+                            <Icon Type="cloud-upload" Style="font-size:32px;color:#94a3b8;" />
+                            <p style="margin:8px 0 4px;color:#475569;font-weight:500;">Click to upload file</p>
+                            <p style="font-size:12px;color:#94a3b8;">Supports DOC, DOCX, PDF, TXT, XLSX</p>
+                        </div>
+                    }
+                </div>
+            </FormItem>
+
+            <Row Gutter="16">
+                <Col Span="12">
+                    <FormItem Label="Est. Hours">
+                        <AntDesign.InputNumber TValue="int" @bind-Value="@formModel.EstimatedHours"
+                                               Min="0" Max="999" Style="width:100%;" />
+                    </FormItem>
+                </Col>
+                <Col Span="12">
+                    <FormItem Label="Est. Minutes">
+                        <AntDesign.InputNumber TValue="int" @bind-Value="@formModel.EstimatedMinutes"
+                                               Min="0" Max="59" Style="width:100%;" />
+                    </FormItem>
+                </Col>
+            </Row>
+        </Form>
+    </ChildContent>
+    <Handler>
+        <div class="tasks-drawer-footer">
+            <Button OnClick="CloseDrawer">Cancel</Button>
+            <Button Type="ButtonType.Primary" Loading="@submitting" OnClick="HandleSubmit">
+                @(isEditMode ? "Save Changes" : "Create Task")
+            </Button>
+        </div>
+    </Handler>
+</Drawer>
+
+@code {
+    private RenderFragment SearchIconFrag => __builder =>
+    {
+        <Icon Type="search" Style="color:#8c8c8c;" />;
+    };
+
+    private void OnSearch(ChangeEventArgs e)
+    {
+        searchText = e.Value?.ToString() ?? string.Empty;
+        ApplyFilters();
+    }
+
+    private void OnFilterChanged()
+    {
+        ApplyFilters();
+    }
+}

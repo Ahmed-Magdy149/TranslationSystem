@@ -4,33 +4,32 @@
 
 <PageTitle>Dashboard - The Translation Gate</PageTitle>
 
-<div style="display: flex; flex-direction: column; gap: 16px; width: 100%;">
-    <!-- Welcome Header -->
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-        <div>
-            <TypographyTitle Level="3" Style="margin: 0;">Dashboard</TypographyTitle>
-            <TypographyText Type="TextType.Secondary">Welcome back! Here's what's happening today.</TypographyText>
-        </div>
-        <Button Type="@ButtonType.Primary" Icon="plus" OnClick="@(() => Navigation.NavigateTo("/tasks"))">
-            New Task
-        </Button>
-    </div>
+<PageContainer>
+    <!-- Page Header -->
+    <AppPageHeader Title="Dashboard"
+                   Subtitle="Welcome back! Here's what's happening today.">
+        <Actions>
+            <Button Type="ButtonType.Primary" Icon="plus" OnClick="@(() => Navigation.NavigateTo("/tasks"))">
+                New Task
+            </Button>
+        </Actions>
+    </AppPageHeader>
 
     <!-- Stat Cards -->
-    <div class="stats-grid">
+    <div class="dash-stats-grid">
         @foreach (var stat in statCards)
         {
-            <Card Bordered="false" Hoverable Class="dashboard-stat-card">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <Card Bordered="false" Class="tms-card-stat">
+                <div class="dash-stat-inner">
                     <div>
-                        <TypographyText Type="TextType.Secondary" Style="font-size: 13px;">@stat.Label</TypographyText>
-                        <br />
-                        <Statistic Value="@stat.Value" ValueStyle="font-size: 28px; font-weight: 700; color: #262626;" />
-                        <TypographyText Style="font-size: 13px; color: @(stat.IsPositive ? "#52c41a" : "#ff4d4f");">
-                            <Icon Type="@GetTrendIcon(stat.IsPositive)" /> @stat.Trend
-                        </TypographyText>
+                        <div class="dash-stat-label">@stat.Label</div>
+                        <div class="dash-stat-value">@stat.Value</div>
+                        <div class="dash-stat-trend @(stat.IsPositive ? "trend-up" : "trend-down")">
+                            <Icon Type="@GetTrendIcon(stat.IsPositive)" />
+                            @stat.Trend
+                        </div>
                     </div>
-                    <div style="width: 48px; height: 48px; border-radius: 8px; background: @stat.IconBg; color: @stat.IconColor; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                    <div class="tms-card-icon" style="background: @stat.IconBg; color: @stat.IconColor;">
                         <Icon Type="@stat.Icon" />
                     </div>
                 </div>
@@ -39,91 +38,89 @@
     </div>
 
     <!-- Metrics Row -->
-    <div class="metrics-grid">
+    <div class="dash-metrics-grid">
         @foreach (var metric in metrics)
         {
-            <Card Bordered="false" Class="dashboard-metric-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <TypographyText Type="TextType.Secondary" Style="font-size: 12px; text-transform: uppercase;">@metric.Label</TypographyText>
-                    <div style="width: 32px; height: 32px; border-radius: 6px; background: @metric.IconBg; color: @metric.IconColor; display: flex; align-items: center; justify-content: center; font-size: 14px;">
+            <Card Bordered="false">
+                <div class="dash-metric-header">
+                    <span class="dash-metric-label">@metric.Label</span>
+                    <div class="tms-card-icon" style="width: 32px; height: 32px; font-size: 14px; background: @metric.IconBg; color: @metric.IconColor;">
                         <Icon Type="@metric.Icon" />
                     </div>
                 </div>
-                <TypographyTitle Level="4" Style="margin: 0;">@metric.Value</TypographyTitle>
-                <Progress Percent="@metric.Percentage" ShowInfo="false" StrokeColor="@metric.BarColor" TrailColor="#f0f0f0" Size="ProgressSize.Small" Style="margin-top: 12px;" />
+                <div class="dash-metric-value">@metric.Value</div>
+                <Progress Percent="@metric.Percentage" ShowInfo="false" StrokeColor="@metric.BarColor" TrailColor="#f1f5f9" Size="ProgressSize.Small" Style="margin-top: 10px;" />
             </Card>
         }
     </div>
 
     <!-- Chart Section -->
-    <Card Bordered="false" Class="dashboard-chart-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+    <Card Bordered="false" Class="tms-section">
+        <div class="dash-chart-header">
             <div>
-                <TypographyTitle Level="5" Style="margin: 0;">Monthly Productivity</TypographyTitle>
-                <TypographyText Type="TextType.Secondary" Style="font-size: 13px;">Translation words completed vs. target</TypographyText>
+                <div style="font-size: 15px; font-weight: 700; color: var(--tms-text-primary); margin-bottom: 2px;">Monthly Productivity</div>
+                <div style="font-size: 13px; color: var(--tms-text-secondary);">Translation words completed vs. target</div>
             </div>
-            <div style="display: flex; gap: 16px; font-size: 13px; color: #64748b;">
-                <span style="display: flex; align-items: center; gap: 6px;">
-                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #1890ff; display: inline-block;"></span>
+            <div class="dash-chart-legend">
+                <span class="dash-legend-item">
+                    <span class="dash-legend-dot" style="background: var(--tms-primary);"></span>
                     Words
                 </span>
-                <span style="display: flex; align-items: center; gap: 6px;">
-                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #722ed1; display: inline-block;"></span>
+                <span class="dash-legend-item">
+                    <span class="dash-legend-dot" style="background: #9333ea;"></span>
                     QA Score
                 </span>
             </div>
         </div>
-        <div class="chart-container">
+        <div class="dash-chart">
             @foreach (var item in chartData)
             {
-                <div class="chart-column">
+                <div class="dash-chart-col">
                     <Tooltip Title="@($"{item.Words:N0} words")">
-                        <div class="chart-bar" style="height: @(item.Height)%;"></div>
+                        <div class="dash-chart-bar" style="height: @(item.Height)%;"></div>
                     </Tooltip>
-                    <TypographyText Type="TextType.Secondary" Style="font-size: 12px;">@item.Month</TypographyText>
+                    <span class="dash-chart-month">@item.Month</span>
                 </div>
             }
         </div>
     </Card>
 
     <!-- Bottom Row -->
-    <div class="bottom-grid">
+    <div class="dash-bottom-grid">
         <!-- Recent Activity -->
-        <Card Bordered="false" Title="Recent Activity" Extra="@activityExtra" Class="dashboard-panel-card">
+        <Card Bordered="false" Title="Recent Activity" Extra="@activityExtra">
             @foreach (var act in recentActivity)
             {
-                <div style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
-                    <div style="width: 36px; height: 36px; border-radius: 50%; background: @act.AvatarBg; color: @act.AvatarColor; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; flex-shrink: 0;">
+                <div class="dash-activity-row">
+                    <div class="dash-activity-avatar" style="background: @act.AvatarBg; color: @act.AvatarColor;">
                         @act.Initials
                     </div>
-                    <div>
-                        <TypographyText Style="font-size: 14px;">@(new MarkupString(act.Description))</TypographyText>
-                        <br />
-                        <TypographyText Type="TextType.Secondary" Style="font-size: 12px;">@act.Time</TypographyText>
+                    <div class="dash-activity-text">
+                        <div class="dash-activity-desc">@(new MarkupString(act.Description))</div>
+                        <div class="dash-activity-time">@act.Time</div>
                     </div>
                 </div>
             }
         </Card>
 
         <!-- Upcoming Deadlines -->
-        <Card Bordered="false" Title="Upcoming Deadlines" Extra="@deadlineExtra" Class="dashboard-panel-card">
+        <Card Bordered="false" Title="Upcoming Deadlines" Extra="@deadlineExtra">
             @foreach (var dl in upcomingDeadlines)
             {
-                <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
-                    <div style="width: 40px; height: 40px; border-radius: 8px; background: @dl.IconBg; color: @dl.IconColor; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;">
+                <div class="dash-deadline-row">
+                    <div class="tms-card-icon" style="width: 40px; height: 40px; font-size: 16px; background: @dl.IconBg; color: @dl.IconColor;">
                         <Icon Type="@dl.Icon" />
                     </div>
-                    <div style="flex: 1;">
-                        <TypographyText Style="font-weight: 500; font-size: 14px;">@dl.Title</TypographyText>
-                        <br />
-                        <TypographyText Type="TextType.Secondary" Style="font-size: 12px;">@dl.Meta</TypographyText>
+                    <div class="dash-deadline-info">
+                        <div class="dash-deadline-title">@dl.Title</div>
+                        <div class="dash-deadline-meta">@dl.Meta</div>
                     </div>
                     <Tag Color="@GetDeadlineColor(dl.TagClass)">@dl.DueText</Tag>
                 </div>
             }
         </Card>
     </div>
-</div>
+</PageContainer>
 
 @code {
     private RenderFragment activityExtra =

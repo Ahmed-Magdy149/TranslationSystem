@@ -1,0 +1,27 @@
+<div class="tms-page-header">
+    <div>
+        @if (!string.IsNullOrEmpty(Breadcrumb))
+        {
+            <div class="tms-breadcrumb">
+                <a href="/dashboard">Home</a>
+                <span class="tms-breadcrumb-sep">/</span>
+                <span>@Breadcrumb</span>
+            </div>
+        }
+        <h1 class="tms-page-title">@Title</h1>
+        @if (!string.IsNullOrEmpty(Subtitle))
+        {
+            <p class="tms-page-subtitle">@Subtitle</p>
+        }
+    </div>
+    <div class="tms-page-actions">
+        @Actions
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string Subtitle { get; set; } = "";
+    [Parameter] public string Breadcrumb { get; set; } = "";
+    [Parameter] public RenderFragment Actions { get; set; } = default!;
+}
