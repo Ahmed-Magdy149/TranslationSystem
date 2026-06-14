@@ -61,6 +61,7 @@ builder.Services.AddScoped(sp =>
 
 // Web Services
 builder.Services.AddScoped<TMS.Web.Services.IUserService, TMS.Web.Services.UserService>();
+builder.Services.AddScoped<TMS.Web.Services.ITaskWebService, TMS.Web.Services.TaskWebService>();
 
 var app = builder.Build();
 

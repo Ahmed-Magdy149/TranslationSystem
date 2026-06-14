@@ -24,6 +24,10 @@ public class CreateTaskDto
     public string Description { get; set; } = string.Empty;
     public string SourceLanguage { get; set; } = null!;
     public string TargetLanguage { get; set; } = null!;
+    public string FileName { get; set; } = string.Empty;
+    public string FileUrl { get; set; } = string.Empty;
+    public int WordCount { get; set; }
+    public double EstimatedHours { get; set; }
     public string CreatedBy { get; set; } = null!;
     public DateTime? Deadline { get; set; }
 }

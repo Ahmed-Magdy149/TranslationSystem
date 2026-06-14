@@ -1,0 +1,250 @@
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+<div class="topnav">
+    <!-- Left: Toggle + Page Title -->
+    <div class="topnav-left">
+        @if (OnToggleSidebar.HasDelegate)
+        {
+            <Button Type="ButtonType.Text" Class="topnav-toggle" OnClick="OnToggleSidebar">
+                <Icon Type="menu-unfold" Style="font-size: 18px;" />
+            </Button>
+        }
+        <div class="topnav-title">
+            <h1 class="page-title">@PageTitle</h1>
+            <span class="page-subtitle">@PageSubtitle</span>
+        </div>
+    </div>
+
+    <!-- Center: Global Search -->
+    <div class="topnav-search">
+        <div class="search-box">
+            <Icon Type="search" Class="search-icon" />
+            <input type="text"
+                   class="search-input"
+                   placeholder="Search tasks, users, or documents..."
+                   @bind="searchQuery"
+                   @oninput="OnSearchInput" />
+            @if (!string.IsNullOrEmpty(searchQuery))
+            {
+                <button class="search-clear" @onclick="ClearSearch">
+                    <Icon Type="close-circle" Style="font-size: 14px;" />
+                </button>
+            }
+            <div class="search-shortcut">
+                <kbd>Ctrl</kbd><kbd>K</kbd>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Actions -->
+    <div class="topnav-right">
+        <Tooltip Title="Refresh">
+            <Button Type="ButtonType.Text" Class="action-btn" OnClick="OnRefresh">
+                <Icon Type="reload" Class="@(isRefreshing ? "spin" : "")" />
+            </Button>
+        </Tooltip>
+
+        <Tooltip Title="Language">
+            <Button Type="ButtonType.Text" Class="action-btn" OnClick="ToggleLanguage">
+                <Icon Type="global" />
+            </Button>
+        </Tooltip>
+
+        <div class="notification-wrap" tabindex="0" @onfocusout="HandleNotificationBlur">
+            <Button Type="ButtonType.Text" Class="action-btn" OnClick="ToggleNotifications">
+                <Badge Count="@unreadCount" Size="BadgeSize.Small" Offset="(4, -2)">
+                    <Icon Type="bell" />
+                </Badge>
+            </Button>
+            @if (isNotificationOpen)
+            {
+                <div class="notification-dropdown">
+                    <div class="notification-header">
+                        <span class="notification-heading">Notifications</span>
+                        <Button Type="ButtonType.Link" Size="ButtonSize.Small" OnClick="MarkAllRead">Mark all read</Button>
+                    </div>
+                    <div class="notification-body">
+                        @foreach (var n in notifications)
+                        {
+                            <div class="notification-row @(n.IsRead ? "read" : "unread")" @onclick="() => MarkAsRead(n)">
+                                <div class="notification-badge @n.IconClass">
+                                    <Icon Type="@n.Icon" />
+                                </div>
+                                <div class="notification-text">
+                                    <div class="notification-title">@n.Title</div>
+                                    <div class="notification-desc">@n.Message</div>
+                                    <div class="notification-time">@n.TimeAgo</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="profile-wrap" tabindex="0" @onfocusout="HandleProfileBlur" @onkeydown="HandleProfileKeyDown">
+            <div class="profile-trigger" @onclick="ToggleProfile">
+                <Avatar Style="@($"background: {UserAvatarColor}; font-weight: 600; font-size: 14px;")">
+                    @UserInitials
+                </Avatar>
+                <div class="profile-info">
+                    <span class="profile-name">@UserName</span>
+                    <span class="profile-role">@UserRole</span>
+                </div>
+                <Icon Type="down" Style="font-size: 12px; color: #94a3b8;" />
+            </div>
+            @if (isProfileOpen)
+            {
+                <div class="profile-dropdown" role="menu">
+                    <div class="profile-header">
+                        <Avatar Size="AvatarSize.Large" Style="@($"background: {UserAvatarColor}; font-weight: 600;")">
+                            @UserInitials
+                        </Avatar>
+                        <div class="profile-header-text">
+                            <div class="profile-header-name">@UserName</div>
+                            <div class="profile-header-role">@UserRole</div>
+                        </div>
+                    </div>
+                    <div class="profile-divider"></div>
+                    <button class="profile-link" @onclick='() => NavigateTo("/profile")'>
+                        <Icon Type="user" />
+                        <span>Profile</span>
+                    </button>
+                    <button class="profile-link" @onclick='() => NavigateTo("/settings")'>
+                        <Icon Type="setting" />
+                        <span>Settings</span>
+                    </button>
+                    <div class="profile-divider"></div>
+                    <button class="profile-link profile-link-danger" @onclick="SignOut">
+                        <Icon Type="logout" />
+                        <span>Sign Out</span>
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string PageTitle { get; set; } = "Dashboard";
+    [Parameter] public string PageSubtitle { get; set; } = "Welcome back";
+    [Parameter] public EventCallback OnRefresh { get; set; }
+    [Parameter] public EventCallback OnToggleSidebar { get; set; }
+
+    private string UserName { get; set; } = "User"; 
+    private string UserInitials { get; set; } = "U";
+    private string UserRole { get; set; } = "";
+    private string UserAvatarColor { get; set; } = "#3b82f6";
+
+    private bool isProfileOpen = false;
+    private bool isNotificationOpen = false;
+    private bool isRefreshing = false;
+    private string searchQuery = "";
+    private int unreadCount = 8;
+    private List<NotificationItem> notifications = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUserFromStorage();
+        LoadSampleNotifications();
+    }
+
+    private async Task LoadUserFromStorage()
+    {
+        try
+        {
+            var userJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user");
+            if (!string.IsNullOrEmpty(userJson))
+            {
+                var user = System.Text.Json.JsonSerializer.Deserialize<UserInfo>(userJson);
+                if (user != null)
+                {
+                    UserName = user.Name ?? "User";
+                    UserRole = user.Role ?? "";
+                    UserInitials = GetInitials(UserName);
+                    UserAvatarColor = GetAvatarColorFromName(UserName);
+                }
+            }
+        }
+        catch { }
+    }
+
+    private string GetInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "U";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2) return $"{parts[0][0]}{parts[^1][0]}".ToUpper();
+        return name[..Math.Min(2, name.Length)].ToUpper();
+    }
+
+    private string GetAvatarColorFromName(string name)
+    {
+        var colors = new[] { "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444", "#06b6d4" };
+        var hash = Math.Abs(name.GetHashCode());
+        return colors[hash % colors.Length];
+    }
+
+    private void LoadSampleNotifications()
+    {
+        notifications = new()
+        {
+            new() { Title = "Leave request accepted", Message = "Your leave request has been approved.", TimeAgo = "8 min ago", Icon = "check-circle", IconClass = "success", IsRead = false },
+            new() { Title = "Expense request submitted", Message = "Your expense request has been submitted for approval.", TimeAgo = "25 min ago", Icon = "file-text", IconClass = "warning", IsRead = false },
+            new() { Title = "Attendance update approved", Message = "Your attendance update has been approved.", TimeAgo = "1 hour ago", Icon = "calendar-check", IconClass = "info", IsRead = false },
+            new() { Title = "Overtime request rejected", Message = "Your overtime request has been rejected.", TimeAgo = "2 hours ago", Icon = "close-circle", IconClass = "error", IsRead = false },
+            new() { Title = "Loan application under review", Message = "Your loan application is under review.", TimeAgo = "3 hours ago", Icon = "wallet", IconClass = "warning", IsRead = true },
+            new() { Title = "Payroll payment processed", Message = "Your payroll has been processed.", TimeAgo = "5 hours ago", Icon = "credit-card", IconClass = "success", IsRead = true },
+            new() { Title = "Expense request approved", Message = "Your expense request has been approved.", TimeAgo = "1 day ago", Icon = "file-text", IconClass = "success", IsRead = true },
+            new() { Title = "Leave request rejected", Message = "Your leave request has been rejected.", TimeAgo = "2 days ago", Icon = "close-circle", IconClass = "error", IsRead = true }
+        };
+        unreadCount = notifications.Count(n => !n.IsRead);
+    }
+
+    private void MarkAsRead(NotificationItem n)
+    {
+        if (!n.IsRead) { n.IsRead = true; unreadCount = notifications.Count(x => !x.IsRead); }
+    }
+
+    private void MarkAllRead() { foreach (var n in notifications) n.IsRead = true; unreadCount = 0; }
+
+    private void ToggleProfile() { isProfileOpen = !isProfileOpen; if (isProfileOpen) isNotificationOpen = false; }
+    private void ToggleNotifications() { isNotificationOpen = !isNotificationOpen; if (isNotificationOpen) isProfileOpen = false; }
+
+    private async void HandleProfileBlur(FocusEventArgs _) { await Task.Delay(150); isProfileOpen = false; StateHasChanged(); }
+    private async void HandleNotificationBlur(FocusEventArgs _) { await Task.Delay(150); isNotificationOpen = false; StateHasChanged(); }
+    private void HandleProfileKeyDown(KeyboardEventArgs e) { if (e.Key == "Escape") isProfileOpen = false; }
+
+    private void NavigateTo(string url) { isProfileOpen = false; Navigation.NavigateTo(url); }
+
+    private async void SignOut()
+    {
+        isProfileOpen = false;
+        await JSRuntime.InvokeVoidAsync("localStorage.clear");
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+
+    private void ToggleLanguage() { }
+    private void OnSearchInput(ChangeEventArgs e) { searchQuery = e.Value?.ToString() ?? ""; }
+    private void ClearSearch() { searchQuery = ""; }
+
+    public void Dispose() { }
+
+    public class NotificationItem
+    {
+        public string Title { get; set; } = "";
+        public string Message { get; set; } = "";
+        public string TimeAgo { get; set; } = "";
+        public string Icon { get; set; } = "";
+        public string IconClass { get; set; } = "";
+        public bool IsRead { get; set; }
+    }
+
+    public class UserInfo
+    {
+        public string Name { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Role { get; set; } = "";
+    }
+}

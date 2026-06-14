@@ -5,115 +5,227 @@
 
 <PageTitle>Users - TMS</PageTitle>
 
-<Space Direction="SpaceDirection.Vertical" Size="SpaceSize.Middle" Style="width: 100%;">
-    <!-- Header -->
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-        <div>
-            <TypographyTitle Level="3" Style="margin: 0;">Users Management</TypographyTitle>
-            <TypographyText Type="TextType.Secondary">Manage team members and their roles</TypographyText>
-        </div>
-        <Button Type="@ButtonType.Primary" Icon="plus" Size="@ButtonSize.Large" OnClick="ShowAddModal">
-            Add New User
-        </Button>
+<PageContainer>
+    <!-- Page Header -->
+    <AppPageHeader Title="Users"
+                   Subtitle="Manage team members, roles, and access permissions"
+                   Breadcrumb="Users">
+        <Actions>
+            <Button Type="ButtonType.Primary" Icon="plus" OnClick="ShowAddModal">
+                Add User
+            </Button>
+        </Actions>
+    </AppPageHeader>
+
+    <!-- Stats Cards -->
+    <div class="users-stats-grid">
+        <Card Bordered="false" Class="tms-card-stat">
+            <div class="users-stat-inner">
+                <div>
+                    <div class="users-stat-label">Total Users</div>
+                    <div class="users-stat-value">@users.Count</div>
+                </div>
+                <div class="tms-card-icon tms-card-icon-blue">
+                    <Icon Type="team" />
+                </div>
+            </div>
+        </Card>
+        <Card Bordered="false" Class="tms-card-stat">
+            <div class="users-stat-inner">
+                <div>
+                    <div class="users-stat-label">Active</div>
+                    <div class="users-stat-value" style="color: var(--tms-success);">@users.Count(u => u.IsActive)</div>
+                </div>
+                <div class="tms-card-icon tms-card-icon-green">
+                    <Icon Type="check-circle" />
+                </div>
+            </div>
+        </Card>
+        <Card Bordered="false" Class="tms-card-stat">
+            <div class="users-stat-inner">
+                <div>
+                    <div class="users-stat-label">Inactive</div>
+                    <div class="users-stat-value" style="color: var(--tms-danger);">@users.Count(u => !u.IsActive)</div>
+                </div>
+                <div class="tms-card-icon tms-card-icon-red">
+                    <Icon Type="pause-circle" />
+                </div>
+            </div>
+        </Card>
+        <Card Bordered="false" Class="tms-card-stat">
+            <div class="users-stat-inner">
+                <div>
+                    <div class="users-stat-label">Admins</div>
+                    <div class="users-stat-value" style="color: #9333ea;">@users.Count(u => u.Role == UserRole.Admin)</div>
+                </div>
+                <div class="tms-card-icon tms-card-icon-purple">
+                    <Icon Type="crown" />
+                </div>
+            </div>
+        </Card>
     </div>
 
-    <!-- Stats Summary -->
-    <Row Gutter="16">
-        <Col Span="6" Xs="12" Lg="6">
-            <Card Bordered="false" Class="users-stat-card">
-                <Statistic Title="Total Users" Value="@users.Count" ValueStyle="color: #1890ff;" />
-            </Card>
-        </Col>
-        <Col Span="6" Xs="12" Lg="6">
-            <Card Bordered="false" Class="users-stat-card">
-                <Statistic Title="Active" Value="@users.Count(u => u.IsActive)" ValueStyle="color: #52c41a;" />
-            </Card>
-        </Col>
-        <Col Span="6" Xs="12" Lg="6">
-            <Card Bordered="false" Class="users-stat-card">
-                <Statistic Title="Inactive" Value="@users.Count(u => !u.IsActive)" ValueStyle="color: #ff4d4f;" />
-            </Card>
-        </Col>
-        <Col Span="6" Xs="12" Lg="6">
-            <Card Bordered="false" Class="users-stat-card">
-                <Statistic Title="Admins" Value="@users.Count(u => u.Role == UserRole.Admin)" ValueStyle="color: #faad14;" />
-            </Card>
-        </Col>
-    </Row>
+    <!-- Filter Bar -->
+    <div class="tms-filter-bar">
+        <Input Placeholder="Search by name or email..."
+               Prefix="@SearchIcon"
+               Class="tms-filter-input"
+               @bind-Value="searchText"
+               @oninput="OnSearch" />
+        <Select TItemValue="string" TItem="string"
+                Style="width: 160px;"
+                @bind-Value="filterRole"
+                Placeholder="All Roles"
+                AllowClear="true"
+                OnSelectedItemChanged="OnFilterChanged">
+            <SelectOption TItemValue="string" TItem="string" Value="@("all")" Label="All Roles" />
+            <SelectOption TItemValue="string" TItem="string" Value="@("Admin")" Label="Admin" />
+            <SelectOption TItemValue="string" TItem="string" Value="@("Manager")" Label="Manager" />
+            <SelectOption TItemValue="string" TItem="string" Value="@("Translator")" Label="Translator" />
+        </Select>
+        <Select TItemValue="string" TItem="string"
+                Style="width: 160px;"
+                @bind-Value="filterStatus"
+                Placeholder="All Status"
+                AllowClear="true"
+                OnSelectedItemChanged="OnFilterChanged">
+            <SelectOption TItemValue="string" TItem="string" Value="@("all")" Label="All Status" />
+            <SelectOption TItemValue="string" TItem="string" Value="@("active")" Label="Active" />
+            <SelectOption TItemValue="string" TItem="string" Value="@("inactive")" Label="Inactive" />
+        </Select>
+    </div>
 
     <!-- Users Table -->
-    <Card Bordered="false" Class="users-table-card" Title="All Users">
-        <Table DataSource="@users" Loading="@loading" TItem="UserDto" RowKey="x => x.Id">
-            <Column Title="Name" @bind-Field="@context.Name" Sortable>
-                <Space>
-                    <SpaceItem>
-                        <Avatar Style="background: #1890ff;">
-                            @context.Name?.Substring(0, 1).ToUpper()
-                        </Avatar>
-                    </SpaceItem>
-                    <SpaceItem>
-                        <TypographyText Strong>@context.Name</TypographyText>
-                    </SpaceItem>
-                </Space>
+    <div class="tms-section">
+        <Table DataSource="@filteredUsers" Loading="@loading" TItem="UserDto" RowKey="x => x.Id" Size="TableSize.Middle">
+            <Column Title="User" @bind-Field="@context.Name" Sortable Width="220">
+                <div class="users-name-cell">
+                    <Avatar Style="background: var(--tms-primary); font-weight: 600; font-size: 14px;"
+                            Size="AvatarSize.Small">
+                        @GetInitials(context.Name)
+                    </Avatar>
+                    <div class="users-name-text">
+                        <span class="users-name-name">@context.Name</span>
+                        <span class="users-name-email">@context.Email</span>
+                    </div>
+                </div>
             </Column>
-            <Column Title="Email" @bind-Field="@context.Email" />
-            <Column Title="Role" @bind-Field="@context.Role">
+            <Column Title="Role" @bind-Field="@context.Role" Width="120" Sortable>
                 <Tag Color="@GetRoleColor(context.Role.ToString())">@context.Role.ToString()</Tag>
             </Column>
-            <Column Title="Status" @bind-Field="@context.IsActive">
-                <Badge Status="@(context.IsActive ? BadgeStatus.Success : BadgeStatus.Error)" Text="@(context.IsActive ? "Active" : "Inactive")" />
+            <Column Title="Status" @bind-Field="@context.IsActive" Width="120" Sortable>
+                <StatusBadge Status="@(context.IsActive ? "active" : "inactive")"
+                             Text="@(context.IsActive ? "Active" : "Inactive")" />
             </Column>
-            <Column Title="Created" @bind-Field="@context.CreatedAt">
-                @context.CreatedAt.ToString("yyyy-MM-dd")
+            <Column Title="Created" @bind-Field="@context.CreatedAt" Width="130" Sortable>
+                @context.CreatedAt.ToString("MMM dd, yyyy")
             </Column>
-            <ActionColumn Title="Actions" Width="150">
-                <Space>
-                    <SpaceItem>
-                        <Button Type="@ButtonType.Primary" Ghost Icon="edit" Size="@ButtonSize.Small" OnClick="() => ShowEditModal(context)">Edit</Button>
-                    </SpaceItem>
-                    <SpaceItem>
-                        <Popconfirm Title="Are you sure you want to delete this user?"
-                                    OnConfirm="() => DeleteUser(context.Id)"
-                                    OkText="Yes"
-                                    CancelText="No">
-                            <Button Type="@ButtonType.Primary" Danger Icon="delete" Size="@ButtonSize.Small">Delete</Button>
-                        </Popconfirm>
-                    </SpaceItem>
-                </Space>
+            <ActionColumn Title="" Width="90" Class="users-actions-col">
+                <div class="tms-row-actions">
+                    <Tooltip Title="Edit">
+                        <Button Type="ButtonType.Text" Icon="edit" OnClick="() => ShowEditModal(context)" />
+                    </Tooltip>
+                    <ConfirmDialog Title="Delete this user?"
+                                   OkText="Delete"
+                                   OkType="ButtonType.Primary"
+                                   OnConfirm="async () => await DeleteUser(context.Id)">
+                        <Tooltip Title="Delete">
+                            <Button Type="ButtonType.Text" Danger Icon="delete" />
+                        </Tooltip>
+                    </ConfirmDialog>
+                </div>
             </ActionColumn>
         </Table>
-    </Card>
-</Space>
+    </div>
+</PageContainer>
 
+<!-- Add / Edit Modal -->
 <Modal Title="@(isEditMode ? "Edit User" : "Add New User")"
        @bind-Visible="@modalVisible"
        OnOk="HandleSubmit"
        OnCancel="HandleCancel"
-       OkText="@(isEditMode ? "Update" : "Create")"
-       Width="600">
+       OkText="@(isEditMode ? "Save Changes" : "Create User")"
+       Width="520">
     <Form Model="@currentUser" Layout="@FormLayout.Vertical">
-        <FormItem Label="Name">
-            <Input @bind-Value="@currentUser.Name" Placeholder="Enter user name" Size="@InputSize.Large" />
-        </FormItem>
-        <FormItem Label="Email">
-            <Input @bind-Value="@currentUser.Email" Placeholder="Enter email address" Size="@InputSize.Large" />
-        </FormItem>
+        <Row Gutter="16">
+            <Col Span="12">
+                <FormItem Label="Full Name">
+                    <Input @bind-Value="@currentUser.Name" Placeholder="Enter full name" />
+                </FormItem>
+            </Col>
+            <Col Span="12">
+                <FormItem Label="Email Address">
+                    <Input @bind-Value="@currentUser.Email" Placeholder="name@company.com" />
+                </FormItem>
+            </Col>
+        </Row>
         @if (!isEditMode)
         {
             <FormItem Label="Password">
-                <InputPassword @bind-Value="@currentUser.Password" Placeholder="Enter password" Size="@InputSize.Large" />
+                <InputPassword @bind-Value="@currentUser.Password" Placeholder="Enter a secure password" />
             </FormItem>
         }
-        <FormItem Label="Role">
-            <Select @bind-Value="@currentUser.Role" TItemValue="UserRole" TItem="UserRole" Placeholder="Select role" Size="@InputSize.Large">
-                <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.Admin" Label="Admin" />
-                <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.Manager" Label="Manager" />
-                <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.Translator" Label="Translator" />
-            </Select>
-        </FormItem>
-        <FormItem Label="Status">
-            <Switch @bind-Value="@currentUser.IsActive" CheckedChildren="Active" UnCheckedChildren="Inactive" />
-        </FormItem>
+        <Row Gutter="16">
+            <Col Span="12">
+                <FormItem Label="Role">
+                    <Select @bind-Value="@currentUser.Role" TItemValue="UserRole" TItem="UserRole" Placeholder="Select role">
+                        <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.Admin" Label="Admin" />
+                        <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.Manager" Label="Manager" />
+                        <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.Translator" Label="Translator" />
+                    </Select>
+                </FormItem>
+            </Col>
+            <Col Span="12">
+                <FormItem Label="Account Status">
+                    <Switch @bind-Value="@currentUser.IsActive" CheckedChildren="Active" UnCheckedChildren="Inactive" />
+                </FormItem>
+            </Col>
+        </Row>
     </Form>
 </Modal>
+
+@code {
+    private RenderFragment SearchIcon => __builder =>
+    {
+        <Icon Type="search" Style="color: #94a3b8;" />;
+    };
+
+    private string searchText = "";
+    private string filterRole = "all";
+    private string filterStatus = "all";
+
+    private List<UserDto> filteredUsers => users
+        .Where(u =>
+        {
+            var matchesSearch = string.IsNullOrWhiteSpace(searchText)
+                || u.Name?.Contains(searchText, StringComparison.OrdinalIgnoreCase) == true
+                || u.Email?.Contains(searchText, StringComparison.OrdinalIgnoreCase) == true;
+
+            var matchesRole = filterRole == "all" || u.Role.ToString() == filterRole;
+            var matchesStatus = filterStatus == "all"
+                || (filterStatus == "active" && u.IsActive)
+                || (filterStatus == "inactive" && !u.IsActive);
+
+            return matchesSearch && matchesRole && matchesStatus;
+        })
+        .ToList();
+
+    private void OnSearch(ChangeEventArgs e)
+    {
+        searchText = e.Value?.ToString() ?? "";
+    }
+
+    private void OnFilterChanged()
+    {
+        // Triggers re-render automatically
+    }
+
+    private string GetInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2) return $"{parts[0][0]}{parts[^1][0]}".ToUpper();
+        return name[..Math.Min(2, name.Length)].ToUpper();
+    }
+}
 

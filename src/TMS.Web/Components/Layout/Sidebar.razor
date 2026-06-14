@@ -1,0 +1,210 @@
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<Sider Theme="SiderTheme.Dark"
+       CollapsedWidth="80"
+       Width="260"
+       Style="background: #0f172a;"
+       Collapsed="Collapsed"
+       Class="sidebar-sider">
+
+    <!-- Brand Header -->
+    <div class="sidebar-brand-area">
+        <a class="sidebar-brand-link" href="/dashboard">
+            <div class="sidebar-brand-logo">
+                <Icon Type="global" Style="font-size: 22px; color: white;" />
+            </div>
+            @if (!Collapsed)
+            {
+                <span class="sidebar-brand-text">The Translation Gate</span>
+            }
+        </a>
+        @if (!Collapsed)
+        {
+            <Button Type="ButtonType.Text"
+                    Class="sidebar-collapse-btn"
+                    OnClick="ToggleCollapse">
+                <Icon Type="menu-fold" Style="font-size: 16px; color: #94a3b8;" />
+            </Button>
+        }
+    </div>
+
+    <!-- Role Switcher -->
+    @if (!Collapsed)
+    {
+        <div class="sidebar-role-switcher">
+            <button class="role-pill @(CurrentRole == UserRole.Translator ? "role-pill-active" : "")"
+                    @onclick="SetRoleToTranslator">
+                <Icon Type="user" />
+                <span>You</span>
+            </button>
+            <button class="role-pill @(CurrentRole == UserRole.Manager ? "role-pill-active" : "")"
+                    @onclick="SetRoleToManager">
+                <Icon Type="team" />
+                <span>Manager</span>
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="sidebar-role-collapsed">
+            <Tooltip Title="@(CurrentRole == UserRole.Translator ? "You (Translator)" : "Manager")"
+                     Placement="Placement.Right">
+                <div class="role-indicator @(CurrentRole == UserRole.Manager ? "role-indicator-manager" : "")">
+                    <Icon Type="@(CurrentRole == UserRole.Translator ? "user" : "team")" Style="color: white; font-size: 16px;" />
+                </div>
+            </Tooltip>
+        </div>
+    }
+
+    <!-- Navigation Menu -->
+    <div class="sidebar-nav">
+        @if (CurrentRole == UserRole.Manager)
+        {
+            <Menu Mode="MenuMode.Inline"
+                  Theme="MenuTheme.Dark"
+                  DefaultSelectedKeys="new[] { GetMenuKey() }"
+                  SelectedKeys="new[] { GetMenuKey() }"
+                  InlineCollapsed="Collapsed"
+                  Class="sidebar-menu"
+                  OnMenuItemClicked="OnMenuItemClick">
+                <MenuItem Key="dashboard" RouterLink="/dashboard">
+                    <Icon Type="dashboard" />
+                    <span>Dashboard</span>
+                </MenuItem>
+                <MenuItem Key="tasks" RouterLink="/tasks">
+                    <Icon Type="file-text" />
+                    <span>Tasks</span>
+                </MenuItem>
+       
+                <MenuItem Key="users" RouterLink="/users">
+                    <Icon Type="user" />
+                    <span>Users</span>
+                </MenuItem>
+       
+            </Menu>
+        }
+        else
+        {
+            <Menu Mode="MenuMode.Inline"
+                  Theme="MenuTheme.Dark"
+                  DefaultSelectedKeys="new[] { GetMenuKey() }"
+                  SelectedKeys="new[] { GetMenuKey() }"
+                  InlineCollapsed="Collapsed"
+                  Class="sidebar-menu"
+                  OnMenuItemClicked="OnMenuItemClick">
+                <MenuItem Key="dashboard" RouterLink="/dashboard">
+                    <Icon Type="dashboard" />
+                    <span>Dashboard</span>
+                </MenuItem>
+                <MenuItem Key="my-tasks" RouterLink="/tasks">
+                    <Icon Type="file-text" />
+                    <span>My Tasks</span>
+                </MenuItem>
+                <MenuItem Key="my-reviews" RouterLink="/my-reviews">
+                    <Icon Type="star" />
+                    <span>My Reviews</span>
+                </MenuItem>
+                <MenuItem Key="users" RouterLink="/users">
+                    <Icon Type="user" />
+                    <span>Users</span>
+                </MenuItem>
+                <MenuItem Key="calendar" RouterLink="/calendar">
+                    <Icon Type="calendar" />
+                    <span>Calendar</span>
+                </MenuItem>
+                <SubMenu Key="settings" TitleTemplate="@settingsTitleTemplate">
+                    <MenuItemGroup Title="Account">
+                        <MenuItem Key="profile" RouterLink="/profile">Personal Info</MenuItem>
+                        <MenuItem Key="password" RouterLink="/change-password">Password</MenuItem>
+                        <MenuItem Key="notifications" RouterLink="/notifications">Notifications</MenuItem>
+                    </MenuItemGroup>
+                </SubMenu>
+            </Menu>
+        }
+    </div>
+
+    <!-- Footer / Logout -->
+    <div class="sidebar-footer">
+        @if (!Collapsed)
+        {
+            <button class="sidebar-logout" @onclick="OnLogout">
+                <Icon Type="poweroff" Class="logout-icon" />
+                <span>Sign Out</span>
+            </button>
+        }
+        else
+        {
+            <Tooltip Title="Sign Out" Placement="Placement.Right">
+                <button class="sidebar-logout-collapsed" @onclick="OnLogout">
+                    <Icon Type="poweroff" Style="color: #f87171; font-size: 18px;" />
+                </button>
+            </Tooltip>
+        }
+    </div>
+</Sider>
+
+@code {
+    [Parameter] public bool Collapsed { get; set; }
+    [Parameter] public EventCallback<bool> CollapsedChanged { get; set; }
+    [Parameter] public UserRole CurrentRole { get; set; }
+    [Parameter] public EventCallback<UserRole> CurrentRoleChanged { get; set; }
+    [Parameter] public EventCallback OnLogout { get; set; }
+
+    private RenderFragment settingsTitleTemplate => __builder =>
+    {
+        <span>
+            <Icon Type="setting" />
+            <span>Settings</span>
+        </span>;
+    };
+
+    private void ToggleCollapse()
+    {
+        Collapsed = !Collapsed;
+        CollapsedChanged.InvokeAsync(Collapsed);
+    }
+
+    private async Task SetRoleToTranslator()
+    {
+        CurrentRole = UserRole.Translator;
+        await CurrentRoleChanged.InvokeAsync(CurrentRole);
+    }
+
+    private async Task SetRoleToManager()
+    {
+        CurrentRole = UserRole.Manager;
+        await CurrentRoleChanged.InvokeAsync(CurrentRole);
+    }
+
+    private string GetMenuKey()
+    {
+        var uri = Navigation.ToBaseRelativePath(Navigation.Uri).ToLower();
+        return uri switch
+        {
+            "" or "dashboard" => "dashboard",
+            "tasks" or "my-tasks" => CurrentRole == UserRole.Manager ? "tasks" : "my-tasks",
+            "translators" => "translators",
+            "users" => "users",
+            "reviews" or "my-reviews" => CurrentRole == UserRole.Manager ? "reviews" : "my-reviews",
+            "calendar" => "calendar",
+            "profile" => "profile",
+            "change-password" => "password",
+            "notifications" => "notifications",
+            _ => "dashboard"
+        };
+    }
+
+    private void OnMenuItemClick(MenuItem menuItem)
+    {
+        // MenuItem clicked - navigation handled by RouterLink
+    }
+
+    public void Dispose() { }
+
+    public enum UserRole
+    {
+        Translator,
+        Manager
+    }
+}

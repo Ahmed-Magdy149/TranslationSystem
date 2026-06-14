@@ -28,8 +28,7 @@ public class TranslationTask
     [BsonRepresentation(BsonType.ObjectId)]
     public string? AssignedTranslatorId { get; set; }
 
-    [BsonRepresentation(BsonType.ObjectId)]
-    public string CreatedBy { get; set; } = null!;
+    public string CreatedBy { get; set; } = string.Empty;
 
     [BsonRepresentation(BsonType.String)]
     public Enums.TaskStatus Status { get; set; } = Enums.TaskStatus.Pending;

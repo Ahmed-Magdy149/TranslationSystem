@@ -1,10 +1,74 @@
-.users-stat-card {
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    text-align: center;
+/* Users Page Styles */
+
+/* Stats Grid */
+.users-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
 }
 
-.users-table-card {
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+.users-stat-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.users-stat-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--tms-text-muted);
+    margin-bottom: 4px;
+}
+
+.users-stat-value {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--tms-text-primary);
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+}
+
+/* Name Cell */
+.users-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.users-name-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.users-name-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--tms-text-primary);
+    line-height: 1.3;
+}
+
+.users-name-email {
+    font-size: 12px;
+    color: var(--tms-text-muted);
+    font-weight: 500;
+}
+
+/* Actions column */
+.users-actions-col {
+    text-align: right !important;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .users-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .users-stats-grid {
+        grid-template-columns: 1fr;
+    }
 }
