@@ -139,6 +139,7 @@
     cursor: pointer;
     transition: border-color 0.2s, background 0.2s;
     overflow: hidden;
+    position: relative;
 }
 
 .tasks-upload-area:hover {
@@ -146,9 +147,20 @@
     background: #eff6ff;
 }
 
+.tasks-upload-area input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
 .tasks-upload-placeholder {
     padding: 28px;
     text-align: center;
+    pointer-events: none;
 }
 
 .tasks-upload-success {
@@ -182,8 +194,12 @@
     display: flex;
     justify-content: flex-end;
     gap: 10px;
-    padding: 12px 0 0;
+    padding: 12px 0;
     border-top: 1px solid #e2e8f0;
+    background: #fff;
+    margin-top: 16px;
+    position: relative;
+    z-index: 10;
 }
 
 /* ── Shared card icon colours ────────────────────────── */

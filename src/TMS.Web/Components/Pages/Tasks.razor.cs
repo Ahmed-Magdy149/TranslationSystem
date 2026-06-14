@@ -12,19 +12,32 @@ namespace TMS.Web.Components.Pages;
 public class TaskFormModel
 {
     public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
     public string TaskType { get; set; } = string.Empty;
+    public string SourceLanguage { get; set; } = "en";
+    public string TargetLanguage { get; set; } = "ar";
     public string AssignedUserId { get; set; } = string.Empty;
     public string FileName { get; set; } = string.Empty;
+    public string FileUrl { get; set; } = string.Empty;
     public long FileSizeBytes { get; set; }
     public int WordCount { get; set; }
     public int EstimatedHours { get; set; }
     public int EstimatedMinutes { get; set; }
+    public string CreatedBy { get; set; } = string.Empty;
 }
 
 public class UserDropdownItem
 {
     public string Value { get; set; } = string.Empty;
     public string Label { get; set; } = string.Empty;
+}
+
+public class UserInfo
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
 }
 
 public partial class Tasks : ComponentBase
@@ -93,6 +106,26 @@ public partial class Tasks : ComponentBase
                 Value = u.Id,
                 Label = u.Name
             }).ToList();
+
+            var userJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user");
+            if (!string.IsNullOrEmpty(userJson))
+            {
+                var user = System.Text.Json.JsonSerializer.Deserialize<UserInfo>(userJson);
+                if (user != null && !string.IsNullOrEmpty(user.Id))
+                {
+                    formModel.CreatedBy = user.Id;
+                }
+                else
+                {
+                    // Use first user as default if current user not found
+                    formModel.CreatedBy = users.FirstOrDefault()?.Id ?? string.Empty;
+                }
+            }
+            else
+            {
+                // Use first user as default if no user in localStorage
+                formModel.CreatedBy = users.FirstOrDefault()?.Id ?? string.Empty;
+            }
         }
         catch { }
     }
@@ -132,6 +165,11 @@ public partial class Tasks : ComponentBase
         drawerVisible = true;
     }
 
+    private void OnDrawerOpen()
+    {
+        Console.WriteLine("[Tasks] Drawer opened");
+    }
+
     private void ShowEditDrawer(TaskWebDto task)
     {
         isEditMode = true;
@@ -142,6 +180,7 @@ public partial class Tasks : ComponentBase
             TaskType = task.TaskType,
             AssignedUserId = task.AssignedUserId,
             FileName = task.FileName,
+            FileUrl = task.FileUrl,
             FileSizeBytes = task.FileSizeBytes,
             WordCount = task.WordCount,
             EstimatedHours = task.EstimatedHours,
@@ -163,20 +202,29 @@ public partial class Tasks : ComponentBase
             return;
         }
 
+        Console.WriteLine($"[Tasks] HandleSubmit called - Title: {formModel.Title}, FileName: {formModel.FileName}, FileUrl: {formModel.FileUrl}");
+
         submitting = true;
         try
         {
             var dto = new CreateTaskWebDto
             {
                 Title = formModel.Title,
+                Description = formModel.Description,
                 TaskType = formModel.TaskType,
+                SourceLanguage = formModel.SourceLanguage,
+                TargetLanguage = formModel.TargetLanguage,
                 AssignedUserId = formModel.AssignedUserId,
                 FileName = formModel.FileName,
+                FileUrl = formModel.FileUrl,
                 FileSizeBytes = formModel.FileSizeBytes,
                 WordCount = formModel.WordCount,
                 EstimatedHours = formModel.EstimatedHours,
-                EstimatedMinutes = formModel.EstimatedMinutes
+                EstimatedMinutes = formModel.EstimatedMinutes,
+                CreatedBy = formModel.CreatedBy
             };
+
+            Console.WriteLine($"[Tasks] Submitting task: Title={dto.Title}, File={dto.FileName}, FileUrl={dto.FileUrl}, WordCount={dto.WordCount}, CreatedBy={dto.CreatedBy}");
 
             if (isEditMode)
             {
@@ -188,24 +236,29 @@ public partial class Tasks : ComponentBase
                     existing.AssignedUserId = dto.AssignedUserId;
                     existing.AssignedUserName = users.FirstOrDefault(u => u.Id == dto.AssignedUserId)?.Name ?? string.Empty;
                     existing.FileName = dto.FileName;
+                    existing.FileUrl = dto.FileUrl;
                     existing.FileSizeBytes = dto.FileSizeBytes;
                     existing.WordCount = dto.WordCount;
                     existing.EstimatedHours = dto.EstimatedHours;
                     existing.EstimatedMinutes = dto.EstimatedMinutes;
                 }
+                Console.WriteLine($"[Tasks] Task updated in memory");
                 Message.Success("Task updated successfully!");
             }
             else
             {
+                Console.WriteLine($"[Tasks] Creating new task via API...");
                 var success = await TaskWebService.CreateTaskAsync(dto);
                 if (success)
                 {
-                    var newTask = allTasks.LastOrDefault();
-                    if (newTask != null)
-                    {
-                        newTask.AssignedUserName = users.FirstOrDefault(u => u.Id == dto.AssignedUserId)?.Name ?? string.Empty;
-                    }
+                    Console.WriteLine($"[Tasks] Task created successfully, reloading tasks...");
+                    await LoadTasks();
                     Message.Success("Task created successfully!");
+                }
+                else
+                {
+                    Console.WriteLine($"[Tasks] Task creation failed");
+                    Message.Error("Failed to create task.");
                 }
             }
 
@@ -214,6 +267,7 @@ public partial class Tasks : ComponentBase
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"[Tasks] Exception in HandleSubmit: {ex.Message}\n{ex.StackTrace}");
             Message.Error($"Error: {ex.Message}");
         }
         finally
@@ -246,16 +300,40 @@ public partial class Tasks : ComponentBase
         formModel.FileName = file.Name;
         formModel.FileSizeBytes = file.Size;
 
+        Console.WriteLine($"[Tasks] File selected: {file.Name}, Size: {file.Size} bytes");
+
         try
         {
             using var stream = file.OpenReadStream(maxAllowedSize: 20 * 1024 * 1024);
-            using var reader = new StreamReader(stream);
-            var content = await reader.ReadToEndAsync();
-            formModel.WordCount = CountWords(content);
+            Console.WriteLine($"[Tasks] Uploading file to server...");
+            
+            var result = await TaskWebService.UploadFileAsync(stream, file.Name);
+            
+            if (!string.IsNullOrEmpty(result.FileUrl))
+            {
+                formModel.FileUrl = result.FileUrl;
+                formModel.WordCount = result.WordCount;
+                formModel.EstimatedHours = (int)result.EstimatedHours;
+                formModel.EstimatedMinutes = (int)((result.EstimatedHours - (int)result.EstimatedHours) * 60);
+                
+                Console.WriteLine($"[Tasks] File uploaded successfully: FileUrl={result.FileUrl}, WordCount={result.WordCount}, EstimatedHours={result.EstimatedHours}");
+                Message.Success($"File uploaded: {file.Name}");
+            }
+            else
+            {
+                Console.WriteLine($"[Tasks] File upload returned empty FileUrl, falling back to local word count");
+                stream.Position = 0;
+                using var reader = new StreamReader(stream);
+                var content = await reader.ReadToEndAsync();
+                formModel.WordCount = CountWords(content);
+                Message.Warning("File uploaded but word count calculated locally");
+            }
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine($"[Tasks] File upload failed: {ex.Message}");
             formModel.WordCount = EstimateWordCountFromSize(file.Size);
+            Message.Error($"File upload failed: {ex.Message}");
         }
     }
 
@@ -267,6 +345,7 @@ public partial class Tasks : ComponentBase
     private void ClearFile()
     {
         formModel.FileName = string.Empty;
+        formModel.FileUrl = string.Empty;
         formModel.FileSizeBytes = 0;
         formModel.WordCount = 0;
     }

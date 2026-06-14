@@ -9,11 +9,9 @@ public class TaskHistory
     [BsonRepresentation(BsonType.ObjectId)]
     public string Id { get; set; } = null!;
 
-    [BsonRepresentation(BsonType.ObjectId)]
-    public string TaskId { get; set; } = null!;
+    public string TaskId { get; set; } = string.Empty;
 
-    [BsonRepresentation(BsonType.ObjectId)]
-    public string UserId { get; set; } = null!;
+    public string UserId { get; set; } = string.Empty;
 
     public string Action { get; set; } = null!;
 

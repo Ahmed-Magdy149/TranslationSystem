@@ -191,12 +191,17 @@
 <Drawer Visible="@drawerVisible"
         Title="@(isEditMode ? "Edit Task" : "Add New Task")"
         Width="520"
+        OnOpen="OnDrawerOpen"
         OnClose="CloseDrawer">
     <ChildContent>
         <Form Model="@formModel" Layout="@FormLayout.Vertical">
 
             <FormItem Label="Task Name">
                 <Input @bind-Value="@formModel.Title" Placeholder="Enter task name" />
+            </FormItem>
+
+            <FormItem Label="Description">
+                <InputTextArea @bind-Value="@formModel.Description" Placeholder="Enter task description (optional)" Rows="3" />
             </FormItem>
 
             <FormItem Label="Task Type">
@@ -220,30 +225,29 @@
             </FormItem>
 
             <FormItem Label="Upload File">
-                <div class="tasks-upload-area" @onclick="TriggerFileInput">
-                    <InputFile id="taskFileInput" OnChange="HandleFileUpload"
-                               style="display:none;" accept="*/*" />
-                    @if (!string.IsNullOrEmpty(formModel.FileName))
-                    {
-                        <div class="tasks-upload-success">
-                            <Icon Type="check-circle" Style="color:#10b981;font-size:24px;" />
-                            <div style="flex:1;">
-                                <div class="tasks-upload-fname">@formModel.FileName</div>
-                                <div class="tasks-upload-fsize">@FormatFileSize(formModel.FileSizeBytes) · @formModel.WordCount.ToString("N0") words</div>
-                            </div>
-                            <Button Type="@ButtonType.Text" Icon="delete" Size="@ButtonSize.Small"
-                                    OnClick="ClearFile" />
+                @if (!string.IsNullOrEmpty(formModel.FileName))
+                {
+                    <div class="tasks-upload-success">
+                        <Icon Type="check-circle" Style="color:#10b981;font-size:24px;" />
+                        <div style="flex:1;">
+                            <div class="tasks-upload-fname">@formModel.FileName</div>
+                            <div class="tasks-upload-fsize">@FormatFileSize(formModel.FileSizeBytes) · @formModel.WordCount.ToString("N0") words</div>
                         </div>
-                    }
-                    else
-                    {
+                        <Button Type="@ButtonType.Text" Icon="delete" Size="@ButtonSize.Small"
+                                OnClick="ClearFile" />
+                    </div>
+                }
+                else
+                {
+                    <div class="tasks-upload-area">
+                        <InputFile OnChange="HandleFileUpload" accept=".pdf,.docx,.txt,.doc" />
                         <div class="tasks-upload-placeholder">
                             <Icon Type="cloud-upload" Style="font-size:32px;color:#94a3b8;" />
                             <p style="margin:8px 0 4px;color:#475569;font-weight:500;">Click to upload file</p>
-                            <p style="font-size:12px;color:#94a3b8;">Supports DOC, DOCX, PDF, TXT, XLSX</p>
+                            <p style="font-size:12px;color:#94a3b8;">Supports DOC, DOCX, PDF, TXT</p>
                         </div>
-                    }
-                </div>
+                    </div>
+                }
             </FormItem>
 
             <Row Gutter="16">
@@ -261,15 +265,14 @@
                 </Col>
             </Row>
         </Form>
-    </ChildContent>
-    <Handler>
+        
         <div class="tasks-drawer-footer">
             <Button OnClick="CloseDrawer">Cancel</Button>
             <Button Type="ButtonType.Primary" Loading="@submitting" OnClick="HandleSubmit">
                 @(isEditMode ? "Save Changes" : "Create Task")
             </Button>
         </div>
-    </Handler>
+    </ChildContent>
 </Drawer>
 
 @code {

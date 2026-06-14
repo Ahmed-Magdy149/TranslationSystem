@@ -39,12 +39,19 @@ public class TaskService : ITaskService
 
     public async Task<TaskDto> CreateAsync(CreateTaskDto dto)
     {
+        _logger.LogInformation("Creating task: {Title}, File: {FileName}, FileUrl: {FileUrl}, WordCount: {WordCount}", 
+            dto.Title, dto.FileName, dto.FileUrl, dto.WordCount);
+
         var task = new TranslationTask
         {
             Title = dto.Title,
             Description = dto.Description,
             SourceLanguage = dto.SourceLanguage,
             TargetLanguage = dto.TargetLanguage,
+            FileName = dto.FileName,
+            FileUrl = dto.FileUrl,
+            WordCount = dto.WordCount,
+            EstimatedHours = dto.EstimatedHours,
             CreatedBy = dto.CreatedBy,
             Deadline = dto.Deadline,
             Status = Core.Enums.TaskStatus.Pending,
@@ -62,7 +69,9 @@ public class TaskService : ITaskService
             CreatedAt = DateTime.UtcNow
         });
 
-        _logger.LogInformation("Task created: {Title} by {CreatedBy}", task.Title, task.CreatedBy);
+        _logger.LogInformation("Task created successfully: ID={TaskId}, Title={Title}, File={FileName}, FileUrl={FileUrl}, WordCount={WordCount}, CreatedBy={CreatedBy}", 
+            task.Id, task.Title, task.FileName, task.FileUrl, task.WordCount, task.CreatedBy);
+        
         return MapToDto(task);
     }
 
