@@ -1,0 +1,247 @@
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+<div class="topnav">
+    <div class="topnav__left">
+        <div class="topnav__brand">
+            <Icon Type="global" Class="brand-icon" />
+            <span class="topnav__brand-name">@Brand</span>
+        </div>
+        <div class="topnav__search">
+            <Icon Type="search" Class="search-icon" />
+            <input type="text" placeholder="Search tasks, users, or documents..." class="search-input" @bind="searchQuery" @oninput="OnSearchInput" />
+            @if (!string.IsNullOrEmpty(searchQuery))
+            {
+                <Button Type="@ButtonType.Text" Class="clear-search-btn" OnClick="ClearSearch">
+                    <Icon Type="close-circle" Style="font-size: 14px;" />
+                </Button>
+            }
+        </div>
+    </div>
+
+    <div class="topnav__actions">
+        <Tooltip Title="Refresh">
+            <Button Type="@ButtonType.Text" Class="icon-btn" OnClick="OnRefresh">
+                <Icon Type="reload" Class="@(isRefreshing ? "rotating" : "")" Style="font-size: 18px;" />
+            </Button>
+        </Tooltip>
+
+        <Tooltip Title="@(currentLanguage == "en" ? "Switch to Arabic" : "Switch to English")">
+            <Button Type="@ButtonType.Text" Class="icon-btn" OnClick="ToggleLanguage">
+                <Icon Type="global" Style="font-size: 18px;" />
+                <span class="lang-badge">@currentLanguage.ToUpper()</span>
+            </Button>
+        </Tooltip>
+
+        <Tooltip Title="Quick Actions">
+            <Button Type="@ButtonType.Text" Class="icon-btn" OnClick="ToggleQuickActions">
+                <Icon Type="appstore" Style="font-size: 18px;" />
+            </Button>
+        </Tooltip>
+
+        <div class="notification-wrapper" tabindex="0" @onfocusout="HandleNotificationBlur">
+            <Button Type="@ButtonType.Text" Class="icon-btn" OnClick="ToggleNotifications">
+                <Badge Count="@unreadCount" Size="@BadgeSize.Small">
+                    <Icon Type="bell" Style="font-size: 18px;" />
+                </Badge>
+            </Button>
+            @if (isNotificationOpen)
+            {
+                <div class="notification-panel">
+                    <div class="notification-panel__header">
+                        <span class="notification-panel__title">Notifications</span>
+                        <Button Type="@ButtonType.Link" Size="@ButtonSize.Small" OnClick="MarkAllRead">Mark all read</Button>
+                    </div>
+                    <div class="notification-panel__list">
+                        @foreach (var notification in notifications)
+                        {
+                            <div class="notification-item @(notification.IsRead ? "read" : "unread")" @onclick="() => MarkAsRead(notification)">
+                                <div class="notification-item__icon @notification.IconClass">
+                                    <Icon Type="@notification.Icon" />
+                                </div>
+                                <div class="notification-item__content">
+                                    <div class="notification-item__title">@notification.Title</div>
+                                    <div class="notification-item__message">@notification.Message</div>
+                                    <div class="notification-item__time">@notification.TimeAgo</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="avatar-wrapper" tabindex="0" @onfocusout="HandleBlur" @onkeydown="HandleKeyDown">
+            <div class="avatar-circle" title="@UserInitials" @onclick="ToggleMenu">
+                <Avatar Style="@($"background: {UserAvatarColor}; font-weight: 500;")">@UserInitials</Avatar>
+            </div>
+            @if (isMenuOpen)
+            {
+                <div class="avatar-menu" role="menu">
+                    <div class="menu-header">
+                        <Avatar Size="@AvatarSize.Large" Style="@($"background: {UserAvatarColor}; font-weight: 500;")">@UserInitials</Avatar>
+                        <div class="menu-title">
+                            <div class="menu-name">@UserName</div>
+                            <div class="menu-role">@UserRole</div>
+                        </div>
+                    </div>
+
+                    <div class="menu-sep"></div>
+
+                    <button class="menu-item" role="menuitem" @onclick='() => { isMenuOpen = false; Navigation.NavigateTo("/profile"); }'>
+                        <Icon Type="user" />
+                        <span>Personal information</span>
+                    </button>
+
+                    <button class="menu-item" role="menuitem" @onclick='() => { isMenuOpen = false; Navigation.NavigateTo("/shift-management"); }'>
+                        <Icon Type="calendar" />
+                        <span>Shift management</span>
+                    </button>
+
+                    <button class="menu-item" role="menuitem" @onclick='() => { isMenuOpen = false; Navigation.NavigateTo("/org-structure"); }'>
+                        <Icon Type="team" />
+                        <span>Organizational structure</span>
+                    </button>
+
+                    <div class="menu-sep"></div>
+
+                    <button class="menu-item menu-item--danger" role="menuitem" @onclick="SignOut">
+                        <Icon Type="logout" />
+                        <span>Sign out</span>
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Brand { get; set; } = "The Translation Gate";
+    [Parameter] public string UserName { get; set; } = "Sarah Reed";
+    [Parameter] public string UserInitials { get; set; } = "SR";
+    [Parameter] public string UserRole { get; set; } = "Project Manager";
+    [Parameter] public string UserAvatarColor { get; set; } = "#3b82f6";
+    [Parameter] public EventCallback OnRefresh { get; set; }
+
+    private bool isMenuOpen = false;
+    private bool isNotificationOpen = false;
+    private bool isRefreshing = false;
+    private string searchQuery = "";
+    private string currentLanguage = "en";
+    private int unreadCount = 8;
+    private List<NotificationItem> notifications = new();
+
+    protected override void OnInitialized()
+    {
+        LoadSampleNotifications();
+    }
+
+    private void LoadSampleNotifications()
+    {
+        notifications = new List<NotificationItem>
+        {
+            new() { Title = "Leave request accepted", Message = "Your leave request has been approved.", TimeAgo = "8 min ago", Icon = "check-circle", IconClass = "success", IsRead = false },
+            new() { Title = "Expense request submitted", Message = "Your expense request has been submitted for approval.", TimeAgo = "25 min ago", Icon = "file-text", IconClass = "warning", IsRead = false },
+            new() { Title = "Attendance update approved", Message = "Your attendance update has been approved.", TimeAgo = "1 hour ago", Icon = "calendar-check", IconClass = "info", IsRead = false },
+            new() { Title = "Overtime request rejected", Message = "Your overtime request has been rejected.", TimeAgo = "2 hours ago", Icon = "close-circle", IconClass = "error", IsRead = false },
+            new() { Title = "Loan application under review", Message = "Your loan application is under review.", TimeAgo = "3 hours ago", Icon = "wallet", IconClass = "warning", IsRead = true },
+            new() { Title = "Payroll payment processed", Message = "Your payroll has been processed.", TimeAgo = "5 hours ago", Icon = "credit-card", IconClass = "success", IsRead = true },
+            new() { Title = "Expense request approved", Message = "Your expense request has been approved.", TimeAgo = "1 day ago", Icon = "file-text", IconClass = "success", IsRead = true },
+            new() { Title = "Leave request rejected", Message = "Your leave request has been rejected.", TimeAgo = "2 days ago", Icon = "close-circle", IconClass = "error", IsRead = true }
+        };
+        unreadCount = notifications.Count(n => !n.IsRead);
+    }
+
+    private void MarkAsRead(NotificationItem notification)
+    {
+        if (!notification.IsRead)
+        {
+            notification.IsRead = true;
+            unreadCount = notifications.Count(n => !n.IsRead);
+        }
+    }
+
+    private void MarkAllRead()
+    {
+        foreach (var n in notifications) n.IsRead = true;
+        unreadCount = 0;
+    }
+
+    private void ToggleMenu() => isMenuOpen = !isMenuOpen;
+
+    private async void HandleBlur(FocusEventArgs _)
+    {
+        await Task.Delay(150);
+        isMenuOpen = false;
+        StateHasChanged();
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape") isMenuOpen = false;
+    }
+
+    private async void SignOut()
+    {
+        isMenuOpen = false;
+        // Clear all authentication data
+        await JSRuntime.InvokeVoidAsync("localStorage.clear");
+        // Force navigation to login page with full page reload
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+
+    private void ToggleNotifications()
+    {
+        isNotificationOpen = !isNotificationOpen;
+        if (isNotificationOpen) isMenuOpen = false;
+    }
+
+    private async void HandleNotificationBlur(FocusEventArgs _)
+    {
+        await Task.Delay(150);
+        isNotificationOpen = false;
+        StateHasChanged();
+    }
+
+    private void ToggleLanguage()
+    {
+        currentLanguage = currentLanguage == "en" ? "ar" : "en";
+    }
+
+    private void ToggleQuickActions()
+    {
+        // Quick actions logic
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        searchQuery = e.Value?.ToString() ?? "";
+    }
+
+    private void ClearSearch()
+    {
+        searchQuery = "";
+    }
+
+    private async Task HandleRefresh()
+    {
+        isRefreshing = true;
+        await OnRefresh.InvokeAsync();
+        await Task.Delay(500);
+        isRefreshing = false;
+        StateHasChanged();
+    }
+
+    public void Dispose() { }
+
+    public class NotificationItem
+    {
+        public string Title { get; set; } = "";
+        public string Message { get; set; } = "";
+        public string TimeAgo { get; set; } = "";
+        public string Icon { get; set; } = "";
+        public string IconClass { get; set; } = "";
+        public bool IsRead { get; set; }
+    }
+}

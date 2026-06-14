@@ -134,43 +134,40 @@
             @if (!collapsed)
             {
                 <div class="logout-menu-item" @onclick="HandleLogout">
-                    <Icon Type="logout" />
+                    <Icon Type="poweroff" Class="logout-icon" />
                     <span>Sign out</span>
                 </div>
             }
             else
             {
                 <div class="logout-icon-only" @onclick="HandleLogout" title="Sign out">
-                    <Icon Type="logout" Style="color: #94a3b8;" />
+                    <Icon Type="poweroff" Class="logout-icon-collapsed" />
                 </div>
             }
         </div>
     </Sider>
     <Layout Style="background: #f8fafc;">
-        <Header Class="app-header" Style="background: white; padding: 0 24px; height: 64px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e8e8e8;">
-            <div style="display: flex; align-items: center; gap: 16px;">
-                <Button Type="@ButtonType.Text" OnClick="ToggleCollapse" Style="padding: 4px 8px;">
-                    <Icon Type="@GetCollapseIcon()" Style="font-size: 18px; color: #595959;" />
-                </Button>
-                <span style="font-size: 18px; font-weight: 600; color: #1a1a1a;">The Translation Gate</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 16px;">
-                <Input TValue="string"
-                       Placeholder="Search..."
-                       Prefix="@SearchIcon"
-                       Size="@InputSize.Default"
-                       Style="width: 280px; border-radius: 8px;" />
-                <Badge Count="3" Style="cursor: pointer;">
-                    <Icon Type="bell" Style="font-size: 20px; color: #595959;" />
-                </Badge>
-                <div style="cursor: pointer;" @onclick="@(() => NavigateTo("/profile"))">
-                    <Avatar Style="background: #3b82f6; font-weight: 500;">SR</Avatar>
-                </div>
-            </div>
-        </Header>
+        <TopNav Brand="The Translation Gate"
+                UserName="Sarah Reed"
+                UserInitials="SR"
+                UserRole="Project Manager" />
         <Content Style="padding: 24px; background: #f8fafc; min-height: calc(100vh - 64px);">
             @Body
         </Content>
+
+        <div class="app-footer">
+            <div class="footer-content">
+                <div class="footer-status">
+                    <span class="status-badge">
+                        <Icon Type="check-circle" Class="status-check-icon" />
+                        <span>System Operational</span>
+                    </span>
+                </div>
+                <div class="footer-copy">
+                    <span> The Translation Gate. All rights reserved.</span>
+                </div>
+            </div>
+        </div>
     </Layout>
 </Layout>
 
@@ -221,8 +218,9 @@
 
     private async Task HandleLogout()
     {
-        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "token");
-        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "user");
+        // Clear all authentication data
+        await JSRuntime.InvokeVoidAsync("localStorage.clear");
+        // Force navigation to login page with full page reload
         Navigation.NavigateTo("/login", forceLoad: true);
     }
 
