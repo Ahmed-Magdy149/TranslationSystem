@@ -1,0 +1,74 @@
+.reports-container {
+    padding: 24px;
+    background: #f8fafc;
+    min-height: calc(100vh - 68px);
+}
+
+.reports-filter-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.reports-tabs-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.reports-number {
+    font-weight: 600;
+    color: #3b82f6;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.reports-reason {
+    color: #64748b;
+    font-size: 13px;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Table Styling */
+:global(.reports-tabs-card .ant-table) {
+    font-size: 13px;
+}
+
+:global(.reports-tabs-card .ant-table-thead > tr > th) {
+    background: #f8fafc;
+    font-weight: 600;
+    color: #1e293b;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+:global(.reports-tabs-card .ant-table-tbody > tr:hover > td) {
+    background: #f1f5f9 !important;
+}
+
+/* Tabs Styling */
+:global(.reports-tabs-card .ant-tabs-nav) {
+    margin-bottom: 16px;
+}
+
+:global(.reports-tabs-card .ant-tabs-tab) {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+:global(.reports-tabs-card .ant-tabs-tab-active) {
+    color: #3b82f6;
+}
+
+/* Progress Bar */
+:global(.ant-progress-text) {
+    font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .reports-container {
+        padding: 16px;
+    }
+}

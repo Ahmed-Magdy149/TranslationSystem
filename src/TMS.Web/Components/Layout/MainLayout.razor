@@ -1,6 +1,7 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
+@using TMS.Core.Enums
 
 <Layout Style="min-height: 100vh; background: #f8fafc;">
     <Sidebar @bind-Collapsed="collapsed"
@@ -38,7 +39,47 @@
 
 @code {
     private bool collapsed = false;
-    private Sidebar.UserRole currentUserRole = Sidebar.UserRole.Translator;
+    private UserRole currentUserRole = UserRole.Translator;
+    private bool isAuthenticated = false;
+    private bool hasCheckedAuth = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !hasCheckedAuth)
+        {
+            hasCheckedAuth = true;
+            await LoadUserRoleFromStorage();
+            if (!isAuthenticated)
+            {
+                var currentPath = Navigation.ToBaseRelativePath(Navigation.Uri).ToLower();
+                if (currentPath != "login" && currentPath != "")
+                {
+                    Navigation.NavigateTo("/login");
+                }
+            }
+        }
+    }
+
+    private async Task LoadUserRoleFromStorage()
+    {
+        try
+        {
+            var userJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user");
+            if (!string.IsNullOrEmpty(userJson))
+            {
+                var user = System.Text.Json.JsonSerializer.Deserialize<TopNav.UserInfo>(userJson);
+                if (user != null && !string.IsNullOrEmpty(user.Role))
+                {
+                    if (Enum.TryParse<UserRole>(user.Role, out var role))
+                    {
+                        currentUserRole = role;
+                        isAuthenticated = true;
+                    }
+                }
+            }
+        }
+        catch { }
+    }
 
     private void ToggleSidebar()
     {
@@ -48,23 +89,27 @@
     private async Task HandleLogout()
     {
         await JSRuntime.InvokeVoidAsync("localStorage.clear");
+        isAuthenticated = false;
+        currentUserRole = UserRole.Translator;
         Navigation.NavigateTo("/login", forceLoad: true);
     }
 
     private string GetPageTitle()
     {
         var uri = Navigation.ToBaseRelativePath(Navigation.Uri).ToLower();
+        var isManager = currentUserRole == UserRole.Admin || currentUserRole == UserRole.Manager || currentUserRole == UserRole.ProjectManager || currentUserRole == UserRole.TeamLeader;
         return uri switch
         {
             "" or "dashboard" => "Dashboard",
-            "tasks" or "my-tasks" => currentUserRole == Sidebar.UserRole.Manager ? "Tasks" : "My Tasks",
+            "tasks" or "my-tasks" => isManager ? "Tasks" : "My Tasks",
             "translators" => "Translators",
             "users" => "Users",
-            "reviews" or "my-reviews" => currentUserRole == Sidebar.UserRole.Manager ? "Reviews" : "My Reviews",
+            "reviews" or "my-reviews" => isManager ? "Reviews" : "My Reviews",
             "calendar" => "Calendar",
             "profile" => "Profile",
             "change-password" => "Change Password",
             "notifications" => "Notifications",
+            "reports" => "Reports",
             _ => "Dashboard"
         };
     }

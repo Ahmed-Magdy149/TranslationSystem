@@ -50,7 +50,10 @@ public partial class Login : ComponentBase
                             System.Text.Json.JsonSerializer.Serialize(result.User));
                     }
                     
-                    // Navigate to Dashboard
+                    // Small delay to ensure localStorage is persisted
+                    await Task.Delay(100);
+                    
+                    // Navigate to Dashboard with forceLoad to ensure full page reload
                     Navigation.NavigateTo("/dashboard", forceLoad: true);
                 }
                 else

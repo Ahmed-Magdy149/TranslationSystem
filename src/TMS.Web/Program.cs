@@ -18,6 +18,8 @@ builder.Services.AddSingleton<MongoDbContext>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 builder.Services.AddScoped<ITranslatorRepository, TranslatorRepository>();
+builder.Services.AddScoped<ITaskHistoryRepository, TaskHistoryRepository>();
+builder.Services.AddScoped<IServiceRateRepository, ServiceRateRepository>();
 builder.Services.AddScoped<IRepository<TaskHistory>>(sp =>
     new MongoRepository<TaskHistory>(sp.GetRequiredService<MongoDbContext>().TaskHistories));
 builder.Services.AddScoped<IRepository<Review>>(sp =>
@@ -30,6 +32,8 @@ builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<ITranslatorService, TranslatorService>();
 builder.Services.AddScoped<IApprovalService, ApprovalService>();
 builder.Services.AddScoped<IAssistantService, AssistantService>();
+builder.Services.AddScoped<IServiceRateService, ServiceRateService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 
 // Infrastructure Services
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();

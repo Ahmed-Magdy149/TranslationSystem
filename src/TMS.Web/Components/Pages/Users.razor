@@ -81,6 +81,9 @@
             <SelectOption TItemValue="string" TItem="string" Value="@("all")" Label="All Roles" />
             <SelectOption TItemValue="string" TItem="string" Value="@("Admin")" Label="Admin" />
             <SelectOption TItemValue="string" TItem="string" Value="@("Manager")" Label="Manager" />
+            <SelectOption TItemValue="string" TItem="string" Value="@("ProjectManager")" Label="Project Manager" />
+            <SelectOption TItemValue="string" TItem="string" Value="@("TeamLeader")" Label="Team Leader" />
+            <SelectOption TItemValue="string" TItem="string" Value="@("Reviewer")" Label="Reviewer" />
             <SelectOption TItemValue="string" TItem="string" Value="@("Translator")" Label="Translator" />
         </Select>
         <Select TItemValue="string" TItem="string"
@@ -171,6 +174,9 @@
                     <Select @bind-Value="@currentUser.Role" TItemValue="UserRole" TItem="UserRole" Placeholder="Select role">
                         <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.Admin" Label="Admin" />
                         <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.Manager" Label="Manager" />
+                        <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.ProjectManager" Label="Project Manager" />
+                        <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.TeamLeader" Label="Team Leader" />
+                        <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.Reviewer" Label="Reviewer" />
                         <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.Translator" Label="Translator" />
                     </Select>
                 </FormItem>
