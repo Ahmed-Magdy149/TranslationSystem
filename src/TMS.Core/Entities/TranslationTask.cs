@@ -25,8 +25,20 @@ public class TranslationTask
 
     public double EstimatedHours { get; set; }
 
+    public string ServiceType { get; set; } = "Translation";
+
+    public string? ProjectId { get; set; }
+
+    public string? ProjectName { get; set; }
+
     [BsonRepresentation(BsonType.ObjectId)]
     public string? AssignedTranslatorId { get; set; }
+
+    public string? AssignedTeamLeaderId { get; set; }
+
+    public string? AssignedReviewerId { get; set; }
+
+    public string? AssignedProjectManagerId { get; set; }
 
     public string CreatedBy { get; set; } = string.Empty;
 
@@ -34,6 +46,8 @@ public class TranslationTask
     public Enums.TaskStatus Status { get; set; } = Enums.TaskStatus.Pending;
 
     public DateTime? Deadline { get; set; }
+
+    public DateTime? CompletedDate { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

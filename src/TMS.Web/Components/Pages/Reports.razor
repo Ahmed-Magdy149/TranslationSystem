@@ -1,0 +1,130 @@
+@page "/reports"
+@using TMS.Core.DTOs
+@using TMS.Web.Components.Shared
+@inject HttpClient Http
+@inject MessageService Message
+
+<TMS.Web.Components.Shared.PageHeader Title="Production Reports" Subtitle="Comprehensive performance analytics and insights" />
+
+<div class="reports-container">
+    <!-- Filters Section -->
+    <Card Class="reports-filter-card">
+        <Form Model="@filter">
+        <Row Gutter="16">
+            <Col Span="6">
+                <FormItem Label="Date From">
+                    <DatePicker TValue="DateTime?" @bind-Value="@filter.DateFrom" Style="width:100%;" />
+                </FormItem>
+            </Col>
+            <Col Span="6">
+                <FormItem Label="Date To">
+                    <DatePicker TValue="DateTime?" @bind-Value="@filter.DateTo" Style="width:100%;" />
+                </FormItem>
+            </Col>
+            <Col Span="6">
+                <FormItem Label="Service Type">
+                    <Select TItem="string" TItemValue="string" @bind-Value="@filter.ServiceType" 
+                            Style="width:100%;" AllowClear Placeholder="All Services">
+                        <SelectOptions>
+                            @foreach (var service in serviceTypes)
+                            {
+                                <SelectOption TItemValue="string" TItem="string" Value="@service" Label="@service" />
+                            }
+                        </SelectOptions>
+                    </Select>
+                </FormItem>
+            </Col>
+            <Col Span="6">
+                <FormItem Label="Status">
+                    <Select TItem="string" TItemValue="string" @bind-Value="@filter.Status" 
+                            Style="width:100%;" AllowClear Placeholder="All Status">
+                        <SelectOptions>
+                            @foreach (var status in statusOptions)
+                            {
+                                <SelectOption TItemValue="string" TItem="string" Value="@status" Label="@status" />
+                            }
+                        </SelectOptions>
+                    </Select>
+                </FormItem>
+            </Col>
+        </Row>
+        </Form>
+        <Row Gutter="16" Style="margin-top:16px;">
+            <Col Span="24" Style="text-align:right;">
+                <Space>
+                    <SpaceItem>
+                        <Button OnClick="ClearFilters">Clear</Button>
+                    </SpaceItem>
+                    <SpaceItem>
+                        <Button Type="@ButtonType.Primary" Icon="search" OnClick="LoadReports" Loading="@loading">
+                            Generate Reports
+                        </Button>
+                    </SpaceItem>
+                    <SpaceItem>
+                        <Button Type="@ButtonType.Default" Icon="download" OnClick="ExportToExcel" Loading="@exporting">
+                            Export to Excel
+                        </Button>
+                    </SpaceItem>
+                </Space>
+            </Col>
+        </Row>
+    </Card>
+
+    <!-- Tabs Section -->
+    <Card Class="reports-tabs-card" Style="margin-top:20px;">
+        <Tabs ActiveKey="@activeTab" OnChange="OnTabChange">
+            <TabPane Key="service" Tab="Service Performance">
+                <Table TItem="ServicePerformanceDto" DataSource="@servicePerformanceData" Loading="@loading" 
+                       Bordered Size="@TableSize.Small" PageSize="10">
+                    <PropertyColumn Property="c => c.ServiceType" Title="Service" Sortable />
+                    <PropertyColumn Property="c => c.TranslatorProductivity" Title="Translator (w/h)" Sortable />
+                    <PropertyColumn Property="c => c.SeniorTranslatorProductivity" Title="Senior Translator (w/h)" Sortable />
+                    <PropertyColumn Property="c => c.ReviewerProductivity" Title="Reviewer (w/h)" Sortable />
+                    <PropertyColumn Property="c => c.SPOC" Title="SPOC" />
+                    <PropertyColumn Property="c => c.TotalWords" Title="Total Words" Sortable />
+                    <PropertyColumn Property="c => c.CalculatedHours" Title="Calculated Hours" Sortable />
+                    <PropertyColumn Property="c => c.PerformancePercentage" Title="Performance %" Sortable />
+                </Table>
+            </TabPane>
+
+            <TabPane Key="productivity" Tab="User Productivity">
+                <Table TItem="UserProductivityDto" DataSource="@userProductivityData" Loading="@loading" 
+                       Bordered Size="@TableSize.Small" PageSize="10">
+                    <PropertyColumn Property="c => c.UserName" Title="User" Sortable />
+                    <PropertyColumn Property="c => c.Role" Title="Role" Sortable />
+                    <PropertyColumn Property="c => c.TotalTasks" Title="Total Tasks" Sortable />
+                    <PropertyColumn Property="c => c.CompletedTasks" Title="Completed" Sortable />
+                    <PropertyColumn Property="c => c.TotalWordsCompleted" Title="Total Words" Sortable />
+                    <PropertyColumn Property="c => c.ExpectedHours" Title="Expected Hours" Sortable />
+                    <PropertyColumn Property="c => c.ActualCompletionTime" Title="Actual Hours" Sortable />
+                    <PropertyColumn Property="c => c.OnTimeTasks" Title="On Time" Sortable />
+                    <PropertyColumn Property="c => c.LateTasks" Title="Late" Sortable />
+                    <PropertyColumn Property="c => c.PerformancePercentage" Title="Performance %" Sortable />
+                </Table>
+            </TabPane>
+
+            <TabPane Key="late" Tab="Late Tasks">
+                <Table TItem="LateTaskDto" DataSource="@lateTasksData" Loading="@loading" 
+                       Bordered Size="@TableSize.Small" PageSize="10">
+                    <PropertyColumn Property="c => c.TaskTitle" Title="Task" Sortable />
+                    <PropertyColumn Property="c => c.UserName" Title="User" Sortable />
+                    <PropertyColumn Property="c => c.Deadline" Title="Deadline" Sortable />
+                    <PropertyColumn Property="c => c.CompletedDate" Title="Completed" Sortable />
+                    <PropertyColumn Property="c => c.DelayReason" Title="Delay Reason" />
+                </Table>
+            </TabPane>
+
+            <TabPane Key="project" Tab="Project Report">
+                <Table TItem="ProjectReportDto" DataSource="@projectReportData" Loading="@loading" 
+                       Bordered Size="@TableSize.Small" PageSize="10">
+                    <PropertyColumn Property="c => c.ProjectName" Title="Project" Sortable />
+                    <PropertyColumn Property="c => c.TotalTasks" Title="Total Tasks" Sortable />
+                    <PropertyColumn Property="c => c.CompletedTasks" Title="Completed" Sortable />
+                    <PropertyColumn Property="c => c.PendingTasks" Title="Pending" Sortable />
+                    <PropertyColumn Property="c => c.TotalWords" Title="Total Words" Sortable />
+                    <PropertyColumn Property="c => c.PerformancePercentage" Title="Performance %" Sortable />
+                </Table>
+            </TabPane>
+        </Tabs>
+    </Card>
+</div>

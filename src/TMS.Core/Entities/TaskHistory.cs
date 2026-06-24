@@ -17,5 +17,13 @@ public class TaskHistory
 
     public string Comment { get; set; } = string.Empty;
 
+    [BsonRepresentation(BsonType.String)]
+    public Enums.TaskStatus? OldStatus { get; set; }
+
+    [BsonRepresentation(BsonType.String)]
+    public Enums.TaskStatus? NewStatus { get; set; }
+
+    public string? DelayReason { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

@@ -141,6 +141,9 @@ public partial class Users : ComponentBase
         {
             "Admin" => "red",
             "Manager" => "blue",
+            "ProjectManager" => "purple",
+            "TeamLeader" => "orange",
+            "Reviewer" => "cyan",
             "Translator" => "green",
             _ => "default"
         };

@@ -1,10 +1,19 @@
 using TMS.Application.DTOs;
 using TMS.Application.Interfaces;
+using TMS.Core.DTOs;
+using TMS.Core.Enums;
 
 namespace TMS.Application.Services;
 
 public class AuthService : IAuthService
 {
+    private readonly IUserService _userService;
+
+    public AuthService(IUserService userService)
+    {
+        _userService = userService;
+    }
+
     public async Task<AuthResult> LoginAsync(string email, string password)
     {
         await Task.Delay(100);
@@ -48,16 +57,35 @@ public class AuthService : IAuthService
             };
         }
 
-        // Demo authentication - accept any valid format
-        // For production, replace with database user lookup and password hash comparison
-        var user = new UserInfo
+        // Look up user from database
+        var user = await _userService.GetByEmailAsync(email);
+        
+        if (user == null)
         {
-            Id = Guid.NewGuid().ToString(),
-            Email = email,
-            Name = "Sarah Reed",
-            Role = "Project Manager"
-        };
+            // For demo: create default admin user if not exists
+            if (email == "admin@translationgate.com")
+            {
+                var createUserDto = new CreateUserDto
+                {
+                    Name = "Admin User",
+                    Email = email,
+                    Password = password,
+                    Role = UserRole.Admin,
+                    IsActive = true
+                };
+                user = await _userService.CreateAsync(createUserDto);
+            }
+            else
+            {
+                return new AuthResult
+                {
+                    Success = false,
+                    Message = "User not found"
+                };
+            }
+        }
 
+        // For demo, accept any password (in production, verify password hash)
         // Generate simple token (for production, use JWT)
         var token = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
 
@@ -66,7 +94,13 @@ public class AuthService : IAuthService
             Success = true,
             Message = "Login successful",
             Token = token,
-            User = user
+            User = new UserInfo
+            {
+                Id = user.Id,
+                Email = user.Email,
+                Name = user.Name,
+                Role = user.Role.ToString() // Convert enum to string without spaces
+            }
         };
     }
 

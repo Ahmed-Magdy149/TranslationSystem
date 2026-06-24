@@ -19,4 +19,7 @@ public class MongoDbContext
     public IMongoCollection<TranslationTask> Tasks => _database.GetCollection<TranslationTask>("Tasks");
     public IMongoCollection<TaskHistory> TaskHistories => _database.GetCollection<TaskHistory>("TaskHistories");
     public IMongoCollection<Review> Reviews => _database.GetCollection<Review>("Reviews");
+    public IMongoCollection<ServiceRate> ServiceRates => _database.GetCollection<ServiceRate>("ServiceRates");
+    
+    public IMongoDatabase Database => _database;
 }
