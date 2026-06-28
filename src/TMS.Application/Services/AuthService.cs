@@ -67,11 +67,11 @@ public class AuthService : IAuthService
             {
                 var createUserDto = new CreateUserDto
                 {
-                    Name = "Admin User",
+                    FullName = "Admin User",
                     Email = email,
                     Password = password,
                     Role = UserRole.Admin,
-                    IsActive = true
+                    Status = UserStatus.Active
                 };
                 user = await _userService.CreateAsync(createUserDto);
             }
@@ -83,6 +83,15 @@ public class AuthService : IAuthService
                     Message = "User not found"
                 };
             }
+        }
+
+        if (user.Status == UserStatus.Inactive)
+        {
+            return new AuthResult
+            {
+                Success = false,
+                Message = "Account is inactive. Please contact administrator."
+            };
         }
 
         // For demo, accept any password (in production, verify password hash)
@@ -98,7 +107,7 @@ public class AuthService : IAuthService
             {
                 Id = user.Id,
                 Email = user.Email,
-                Name = user.Name,
+                Name = user.FullName,
                 Role = user.Role.ToString() // Convert enum to string without spaces
             }
         };

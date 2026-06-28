@@ -121,7 +121,7 @@ public class ReportService : IReportService
             result.Add(new UserProductivityDto
             {
                 UserId = user.Id,
-                UserName = user.Name,
+                UserName = user.FullName,
                 Role = user.Role.ToString(),
                 TotalTasks = userTasks.Count,
                 CompletedTasks = completedTasks.Count,
@@ -141,7 +141,7 @@ public class ReportService : IReportService
     {
         var tasks = await GetFilteredTasksAsync(filter);
         var users = await _userRepository.GetAllAsync();
-        var userDict = users.ToDictionary(u => u.Id, u => u.Name);
+        var userDict = users.ToDictionary(u => u.Id, u => u.FullName);
 
         var lateTasks = tasks.Where(t => 
             t.Status == TaskStatus.Approved &&

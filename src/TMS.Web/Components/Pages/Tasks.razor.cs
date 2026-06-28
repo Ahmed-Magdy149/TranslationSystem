@@ -104,7 +104,7 @@ public partial class Tasks : ComponentBase
             userDropdownItems = users.Select(u => new UserDropdownItem
             {
                 Value = u.Id,
-                Label = u.Name
+                Label = u.FullName
             }).ToList();
 
             var userJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user");
@@ -234,7 +234,7 @@ public partial class Tasks : ComponentBase
                     existing.Title = dto.Title;
                     existing.TaskType = dto.TaskType;
                     existing.AssignedUserId = dto.AssignedUserId;
-                    existing.AssignedUserName = users.FirstOrDefault(u => u.Id == dto.AssignedUserId)?.Name ?? string.Empty;
+                    existing.AssignedUserName = users.FirstOrDefault(u => u.Id == dto.AssignedUserId)?.FullName ?? string.Empty;
                     existing.FileName = dto.FileName;
                     existing.FileUrl = dto.FileUrl;
                     existing.FileSizeBytes = dto.FileSizeBytes;

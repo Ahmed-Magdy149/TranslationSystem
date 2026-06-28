@@ -7,5 +7,6 @@ public enum UserRole
     ProjectManager,
     TeamLeader,
     Reviewer,
-    Translator
+    Translator,
+    QAMember
 }

@@ -20,6 +20,7 @@ public class MongoDbContext
     public IMongoCollection<TaskHistory> TaskHistories => _database.GetCollection<TaskHistory>("TaskHistories");
     public IMongoCollection<Review> Reviews => _database.GetCollection<Review>("Reviews");
     public IMongoCollection<ServiceRate> ServiceRates => _database.GetCollection<ServiceRate>("ServiceRates");
+    public IMongoCollection<QualityScoreRecord> QualityScores => _database.GetCollection<QualityScoreRecord>("QualityScores");
     
     public IMongoDatabase Database => _database;
 }

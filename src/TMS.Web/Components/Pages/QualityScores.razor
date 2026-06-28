@@ -1,0 +1,380 @@
+@page "/quality-scores"
+@rendermode InteractiveServer
+@using TMS.Core.DTOs
+@using TMS.Core.Enums
+
+<PageTitle>Quality Scores - TMS</PageTitle>
+
+<PageContainer>
+    <!-- Page Header -->
+    <AppPageHeader Title="Quality Scores"
+                   Subtitle="Track translator quality evaluation and reviewer scoring"
+                   Breadcrumb="Quality Scores">
+        <Actions>
+            <Button Type="ButtonType.Primary" Icon="plus" OnClick="ShowAddModal">
+                Add Score
+            </Button>
+        </Actions>
+    </AppPageHeader>
+
+    <!-- Stats Cards -->
+    <div class="users-stats-grid">
+        <Card Bordered="false" Class="tms-card-stat">
+            <div class="users-stat-inner">
+                <div>
+                    <div class="users-stat-label">Total Reviews</div>
+                    <div class="users-stat-value">@scores.Count</div>
+                </div>
+                <div class="tms-card-icon tms-card-icon-blue">
+                    <Icon Type="file-text" />
+                </div>
+            </div>
+        </Card>
+        <Card Bordered="false" Class="tms-card-stat">
+            <div class="users-stat-inner">
+                <div>
+                    <div class="users-stat-label">Total Words</div>
+                    <div class="users-stat-value" style="color: var(--tms-success);">@scores.Sum(s => s.ReviewedWords).ToString("N0")</div>
+                </div>
+                <div class="tms-card-icon tms-card-icon-green">
+                    <Icon Type="check-circle" />
+                </div>
+            </div>
+        </Card>
+        <Card Bordered="false" Class="tms-card-stat">
+            <div class="users-stat-inner">
+                <div>
+                    <div class="users-stat-label">Avg Quality</div>
+                    <div class="users-stat-value" style="color: #9333ea;">@GetAverageQuality()</div>
+                </div>
+                <div class="tms-card-icon tms-card-icon-purple">
+                    <Icon Type="star" />
+                </div>
+            </div>
+        </Card>
+        <Card Bordered="false" Class="tms-card-stat">
+            <div class="users-stat-inner">
+                <div>
+                    <div class="users-stat-label">Total Errors</div>
+                    <div class="users-stat-value" style="color: var(--tms-danger);">@scores.Sum(s => s.ErrorCount).ToString("N0")</div>
+                </div>
+                <div class="tms-card-icon tms-card-icon-red">
+                    <Icon Type="warning" />
+                </div>
+            </div>
+        </Card>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="tms-filter-bar">
+        <Input Placeholder="Search by translator or reviewer..."
+               Prefix="@SearchIcon"
+               Class="tms-filter-input"
+               @bind-Value="searchText"
+               @oninput="OnSearch" />
+        <Select TItemValue="string" TItem="string"
+                Style="width: 180px;"
+                @bind-Value="filterService"
+                Placeholder="All Services"
+                AllowClear="true"
+                OnSelectedItemChanged="OnFilterChanged">
+            <SelectOption TItemValue="string" TItem="string" Value="@("all")" Label="All Services" />
+            @if (serviceTypes != null)
+            {
+                @foreach (var service in serviceTypes)
+                {
+                    if (!string.IsNullOrEmpty(service))
+                    {
+                        <SelectOption TItemValue="string" TItem="string" Value="@service" Label="@service" />
+                    }
+                }
+            }
+        </Select>
+        <Input Placeholder="From (yyyy-MM-dd)" @bind-Value="filterStartDateText" @oninput="OnStartDateChanged" Style="width: 140px;" />
+        <Input Placeholder="To (yyyy-MM-dd)" @bind-Value="filterEndDateText" @oninput="OnEndDateChanged" Style="width: 140px;" />
+    </div>
+
+    <!-- Scores Table -->
+    <div class="tms-section">
+        <Table DataSource="@pagedScores" Loading="@loading" TItem="QualityScoreDto" RowKey="x => x.Id" Size="TableSize.Middle">
+            <Column Title="Date" @bind-Field="@context.Date" Width="120" Sortable>
+                @context.Date.ToString("MMM dd, yyyy")
+            </Column>
+            <Column Title="Translator" @bind-Field="@context.TranslatorName" Width="150" Sortable>
+                @context.TranslatorName
+            </Column>
+            <Column Title="Reviewer" @bind-Field="@context.ReviewerName" Width="150" Sortable>
+                @context.ReviewerName
+            </Column>
+            <Column Title="Service" @bind-Field="@context.ServiceType" Width="120" Sortable>
+                <Tag>@context.ServiceType</Tag>
+            </Column>
+            <Column Title="Words" @bind-Field="@context.ReviewedWords" Width="100" Sortable>
+                @context.ReviewedWords.ToString("N0")
+            </Column>
+            <Column Title="Hours" @bind-Field="@context.ReviewHours" Width="80" Sortable>
+                @context.ReviewHours.ToString("F1")
+            </Column>
+            <Column Title="Quality %" @bind-Field="@context.QualityPercentage" Width="100" Sortable>
+                <Tag Color="@GetQualityColor(context.QualityPercentage)">@context.QualityPercentage.ToString("F1")%</Tag>
+            </Column>
+            <Column Title="Errors" @bind-Field="@context.ErrorCount" Width="90" Sortable>
+                @if (context.ErrorCount > 0)
+                {
+                    <span>@context.MajorErrors / @context.MinorErrors</span>
+                }
+                else
+                {
+                    <span>0</span>
+                }
+            </Column>
+            <Column Title="Status" @bind-Field="@context.PerformanceStatus" Width="130" Sortable>
+                <Tag Color="@GetPerformanceStatusColor(context.PerformanceStatus)">@context.PerformanceStatus</Tag>
+            </Column>
+            <ActionColumn Title="Actions" Width="120" Class="users-actions-col">
+                <div class="tms-row-actions">
+                    <Tooltip Title="Edit">
+                        <Button Type="ButtonType.Text" Icon="edit" OnClick="() => ShowEditModal(context)" />
+                    </Tooltip>
+                    <ConfirmDialog Title="Delete this score?"
+                                   OkText="Delete"
+                                   OkType="ButtonType.Primary"
+                                   OnConfirm="async () => await DeleteScore(context.Id)">
+                        <Tooltip Title="Delete">
+                            <Button Type="ButtonType.Text" Danger Icon="delete" />
+                        </Tooltip>
+                    </ConfirmDialog>
+                </div>
+            </ActionColumn>
+        </Table>
+
+        <!-- Pagination -->
+        <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
+            <Pagination Total="@filteredScores.Count"
+                        Current="@currentPage"
+                        PageSize="@pageSize"
+                        OnChange="OnPageChanged"
+                        ShowSizeChanger="false" />
+        </div>
+    </div>
+</PageContainer>
+
+<!-- Add / Edit Modal -->
+<Modal Title="@(isEditMode ? "Edit Quality Score" : "Add Quality Score")"
+       @bind-Visible="@modalVisible"
+       OnOk="HandleSubmit"
+       OnCancel="HandleCancel"
+       OkText="@(isEditMode ? "Save Changes" : "Add Score")"
+       Width="720">
+    <Form Model="@currentScore" Layout="@FormLayout.Vertical">
+        <Row Gutter="16">
+            <Col Span="8">
+                <FormItem Label="Date">
+                    <DatePicker TValue="DateTime" @bind-Value="@currentScore.Date" Style="width:100%;" />
+                </FormItem>
+            </Col>
+            <Col Span="8">
+                <FormItem Label="Translator">
+                    <Select @bind-Value="@currentScore.TranslatorId" TItemValue="string" TItem="string"
+                            Placeholder="Select translator" EnableSearch>
+                        @if (translators != null)
+                        {
+                            @foreach (var translator in translators)
+                            {
+                                if (translator != null && !string.IsNullOrEmpty(translator.FullName))
+                                {
+                                    <SelectOption TItemValue="string" TItem="string" Value="@translator.Id" Label="@translator.FullName" />
+                                }
+                            }
+                        }
+                    </Select>
+                </FormItem>
+            </Col>
+            <Col Span="8">
+                <FormItem Label="Reviewer">
+                    <Select @bind-Value="@currentScore.ReviewerId" TItemValue="string" TItem="string"
+                            Placeholder="Select reviewer" EnableSearch>
+                        @if (reviewers != null)
+                        {
+                            @foreach (var reviewer in reviewers)
+                            {
+                                if (reviewer != null && !string.IsNullOrEmpty(reviewer.FullName))
+                                {
+                                    <SelectOption TItemValue="string" TItem="string" Value="@reviewer.Id" Label="@reviewer.FullName" />
+                                }
+                            }
+                        }
+                    </Select>
+                </FormItem>
+            </Col>
+        </Row>
+        <Row Gutter="16">
+            <Col Span="12">
+                <FormItem Label="Service Type">
+                    <Select @bind-Value="@currentScore.ServiceType" TItemValue="string" TItem="string" Placeholder="Select service">
+                        @if (serviceTypes != null)
+                        {
+                            @foreach (var service in serviceTypes)
+                            {
+                                if (!string.IsNullOrEmpty(service))
+                                {
+                                    <SelectOption TItemValue="string" TItem="string" Value="@service" Label="@service" />
+                                }
+                            }
+                        }
+                    </Select>
+                </FormItem>
+            </Col>
+            <Col Span="12">
+                <FormItem Label="Project Name">
+                    <Input @bind-Value="@currentScore.ProjectName" Placeholder="Enter project name" />
+                </FormItem>
+            </Col>
+        </Row>
+        <Row Gutter="16">
+            <Col Span="8">
+                <FormItem Label="Reviewed Words">
+                    <AntDesign.InputNumber TValue="int" @bind-Value="@currentScore.ReviewedWords" Min="0" Style="width:100%;" />
+                </FormItem>
+            </Col>
+            <Col Span="8">
+                <FormItem Label="Review Hours">
+                    <AntDesign.InputNumber TValue="double" @bind-Value="@currentScore.ReviewHours" Min="0" Style="width:100%;" />
+                </FormItem>
+            </Col>
+            <Col Span="8">
+                <FormItem Label="Max Score">
+                    <AntDesign.InputNumber TValue="double" @bind-Value="@currentScore.MaximumScore" Min="1" Style="width:100%;" />
+                </FormItem>
+            </Col>
+        </Row>
+        <Row Gutter="16">
+            <Col Span="8">
+                <FormItem Label="Quality Score">
+                    <AntDesign.InputNumber TValue="double" @bind-Value="@currentScore.QualityScore" Min="0" Max="@currentScore.MaximumScore" Style="width:100%;" />
+                </FormItem>
+            </Col>
+            <Col Span="8">
+                <FormItem Label="Major Errors">
+                    <AntDesign.InputNumber TValue="int" @bind-Value="@currentScore.MajorErrors" Min="0" Style="width:100%;" />
+                </FormItem>
+            </Col>
+            <Col Span="8">
+                <FormItem Label="Minor Errors">
+                    <AntDesign.InputNumber TValue="int" @bind-Value="@currentScore.MinorErrors" Min="0" Style="width:100%;" />
+                </FormItem>
+            </Col>
+        </Row>
+        <FormItem Label="Comments">
+            <TextArea @bind-Value="@currentScore.Comments" Placeholder="Enter comments..." Rows="3" />
+        </FormItem>
+    </Form>
+</Modal>
+
+@code {
+    private RenderFragment SearchIcon => __builder =>
+    {
+        <Icon Type="search" Style="color: #94a3b8;" />;
+    };
+
+    private string searchText = "";
+    private string filterService = "all";
+    private string filterStartDateText = "";
+    private string filterEndDateText = "";
+    private DateTime filterStartDate = DateTime.MinValue;
+    private DateTime filterEndDate = DateTime.MaxValue;
+    private bool useDateFilter = false;
+    private int currentPage = 1;
+    private int pageSize = 10;
+
+    private List<QualityScoreDto> scores = new();
+    private List<UserDto> translators = new();
+    private List<UserDto> reviewers = new();
+    private List<string> serviceTypes = new() { "Translation", "Revision", "TEP", "MTPE", "QA", "LQA", "LSO", "Shooting", "Proofreading" };
+    private bool loading = true;
+    private bool modalVisible = false;
+    private bool isEditMode = false;
+    private CreateQualityScoreDto currentScore = new()
+    {
+        TranslatorId = string.Empty,
+        ReviewerId = string.Empty,
+        ServiceType = "Translation"
+    };
+    private string editScoreId = string.Empty;
+
+    private List<QualityScoreDto> filteredScores => scores
+        .Where(s =>
+        {
+            var matchesSearch = string.IsNullOrWhiteSpace(searchText)
+                || s.TranslatorName?.Contains(searchText, StringComparison.OrdinalIgnoreCase) == true
+                || s.ReviewerName?.Contains(searchText, StringComparison.OrdinalIgnoreCase) == true
+                || s.ProjectName?.Contains(searchText, StringComparison.OrdinalIgnoreCase) == true;
+
+            var matchesService = filterService == "all" || s.ServiceType == filterService;
+            var matchesDate = !useDateFilter || (s.Date >= filterStartDate && s.Date <= filterEndDate);
+
+            return matchesSearch && matchesService && matchesDate;
+        })
+        .ToList();
+
+    private List<QualityScoreDto> pagedScores => filteredScores
+        .Skip((currentPage - 1) * pageSize)
+        .Take(pageSize)
+        .ToList();
+
+    private void OnSearch(ChangeEventArgs e)
+    {
+        searchText = e.Value?.ToString() ?? "";
+        currentPage = 1;
+    }
+
+    private void OnFilterChanged()
+    {
+        currentPage = 1;
+    }
+
+    private void OnPageChanged(PaginationEventArgs args)
+    {
+        currentPage = args.Page;
+    }
+
+    private void OnStartDateChanged(ChangeEventArgs e)
+    {
+        filterStartDateText = e.Value?.ToString() ?? "";
+        useDateFilter = DateTime.TryParse(filterStartDateText, out filterStartDate) || DateTime.TryParse(filterEndDateText, out _);
+        currentPage = 1;
+    }
+
+    private void OnEndDateChanged(ChangeEventArgs e)
+    {
+        filterEndDateText = e.Value?.ToString() ?? "";
+        useDateFilter = DateTime.TryParse(filterEndDateText, out filterEndDate) || DateTime.TryParse(filterStartDateText, out _);
+        currentPage = 1;
+    }
+
+    private string GetAverageQuality()
+    {
+        if (!scores.Any()) return "0%";
+        return $"{scores.Average(s => s.QualityPercentage):F1}%";
+    }
+
+    private string GetQualityColor(double percentage)
+    {
+        return percentage switch
+        {
+            >= 95 => "success",
+            >= 80 => "warning",
+            _ => "error"
+        };
+    }
+
+    private string GetPerformanceStatusColor(string status)
+    {
+        return status switch
+        {
+            "Excellent" => "success",
+            "Good" => "warning",
+            _ => "error"
+        };
+    }
+}

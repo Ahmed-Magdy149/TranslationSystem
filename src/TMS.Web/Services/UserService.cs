@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using TMS.Core.DTOs;
+using TMS.Core.Enums;
 
 namespace TMS.Web.Services;
 
@@ -69,6 +70,19 @@ public class UserService : IUserService
         try
         {
             var response = await _httpClient.DeleteAsync($"{BaseUrl}/{id}");
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public async Task<bool> ChangeStatusAsync(string id, UserStatus status)
+    {
+        try
+        {
+            var response = await _httpClient.PatchAsJsonAsync($"{BaseUrl}/{id}/status", status);
             return response.IsSuccessStatusCode;
         }
         catch

@@ -77,4 +77,18 @@ public class UsersController : ControllerBase
             return NotFound(new { message = ex.Message });
         }
     }
+
+    [HttpPatch("{id}/status")]
+    public async Task<IActionResult> ChangeStatus(string id, [FromBody] ChangeUserStatusDto dto)
+    {
+        try
+        {
+            await _userService.ChangeStatusAsync(id, dto.Status);
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+    }
 }

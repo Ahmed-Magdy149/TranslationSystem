@@ -9,6 +9,7 @@ public interface IUserService
     Task<IEnumerable<UserDto>> GetAllAsync();
     Task<UserDto> CreateAsync(CreateUserDto dto);
     Task UpdateAsync(string id, UpdateUserDto dto);
+    Task ChangeStatusAsync(string id, UserStatus status);
     Task ChangeRoleAsync(string id, UserRole role);
     Task<UserDto?> GetByEmailAsync(string email);
 }

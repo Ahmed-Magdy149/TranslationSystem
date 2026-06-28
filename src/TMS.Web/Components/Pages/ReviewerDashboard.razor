@@ -1,0 +1,184 @@
+@page "/reviewer-dashboard"
+@rendermode InteractiveServer
+@using TMS.Core.DTOs
+@using TMS.Core.Enums
+
+<PageTitle>Reviewer Dashboard - TMS</PageTitle>
+
+<PageContainer>
+    <!-- Page Header -->
+    <AppPageHeader Title="Reviewer Dashboard"
+                   Subtitle="Quality evaluation overview and translator performance insights"
+                   Breadcrumb="Reviewer Dashboard">
+    </AppPageHeader>
+
+    <!-- Stats Cards -->
+    <div class="users-stats-grid">
+        <Card Bordered="false" Class="tms-card-stat">
+            <div class="users-stat-inner">
+                <div>
+                    <div class="users-stat-label">Total Reviews</div>
+                    <div class="users-stat-value">@scores.Count</div>
+                </div>
+                <div class="tms-card-icon tms-card-icon-blue">
+                    <Icon Type="file-text" />
+                </div>
+            </div>
+        </Card>
+        <Card Bordered="false" Class="tms-card-stat">
+            <div class="users-stat-inner">
+                <div>
+                    <div class="users-stat-label">Total Reviewed Words</div>
+                    <div class="users-stat-value" style="color: var(--tms-success);">@scores.Sum(s => s.ReviewedWords).ToString("N0")</div>
+                </div>
+                <div class="tms-card-icon tms-card-icon-green">
+                    <Icon Type="check-circle" />
+                </div>
+            </div>
+        </Card>
+        <Card Bordered="false" Class="tms-card-stat">
+            <div class="users-stat-inner">
+                <div>
+                    <div class="users-stat-label">Average Quality</div>
+                    <div class="users-stat-value" style="color: #9333ea;">@GetAverageQuality()</div>
+                </div>
+                <div class="tms-card-icon tms-card-icon-purple">
+                    <Icon Type="star" />
+                </div>
+            </div>
+        </Card>
+        <Card Bordered="false" Class="tms-card-stat">
+            <div class="users-stat-inner">
+                <div>
+                    <div class="users-stat-label">Average Review Time</div>
+                    <div class="users-stat-value" style="color: var(--tms-danger);">@GetAverageReviewTime()</div>
+                </div>
+                <div class="tms-card-icon tms-card-icon-red">
+                    <Icon Type="clock-circle" />
+                </div>
+            </div>
+        </Card>
+    </div>
+
+    <!-- Performance Summary -->
+    <div class="tms-section" style="margin-top: 20px;">
+        <Row Gutter="16">
+            <Col Span="12">
+                <Card Title="Translator Ranking" Bordered="false">
+                    <Table DataSource="@translatorRankings" TItem="TranslatorRanking" RowKey="x => x.TranslatorName" Size="TableSize.Small" Bordered>
+                        <Column Title="Rank" TData="int" Width="60">
+                            @(translatorRankings.IndexOf(context) + 1)
+                        </Column>
+                        <Column Title="Translator" @bind-Field="@context.TranslatorName" />
+                        <Column Title="Reviews" @bind-Field="@context.ReviewCount" Width="80" />
+                        <Column Title="Avg Quality" TData="double" Width="100">
+                            <Tag Color="@GetQualityColor(context.AverageQuality)">@context.AverageQuality.ToString("F1")%</Tag>
+                        </Column>
+                        <Column Title="Total Errors" @bind-Field="@context.TotalErrors" Width="90" />
+                    </Table>
+                </Card>
+            </Col>
+            <Col Span="12">
+                <Card Title="Performance Distribution" Bordered="false">
+                    <div style="padding: 20px;">
+                        @RenderDistributionBar("Excellent (95-100%)", excellentCount, "#22c55e")
+                        @RenderDistributionBar("Good (80-94%)", goodCount, "#f59e0b")
+                        @RenderDistributionBar("Needs Improvement (Below 80%)", needsImprovementCount, "#ef4444")
+                    </div>
+                </Card>
+            </Col>
+        </Row>
+    </div>
+
+    <!-- Recent Scores -->
+    <div class="tms-section" style="margin-top: 20px;">
+        <Card Title="Recent Quality Scores" Bordered="false">
+            <Table DataSource="@recentScores" Loading="@loading" TItem="QualityScoreDto" RowKey="x => x.Id" Size="TableSize.Middle">
+                <Column Title="Date" @bind-Field="@context.Date" Width="120">
+                    @context.Date.ToString("MMM dd, yyyy")
+                </Column>
+                <Column Title="Translator" @bind-Field="@context.TranslatorName" Width="150" />
+                <Column Title="Service" @bind-Field="@context.ServiceType" Width="120" />
+                <Column Title="Words" @bind-Field="@context.ReviewedWords" Width="100" />
+                <Column Title="Quality %" @bind-Field="@context.QualityPercentage" Width="100">
+                    <Tag Color="@GetQualityColor(context.QualityPercentage)">@context.QualityPercentage.ToString("F1")%</Tag>
+                </Column>
+                <Column Title="Status" @bind-Field="@context.PerformanceStatus" Width="130">
+                    <Tag Color="@GetPerformanceStatusColor(context.PerformanceStatus)">@context.PerformanceStatus</Tag>
+                </Column>
+            </Table>
+        </Card>
+    </div>
+</PageContainer>
+
+@code {
+    private List<QualityScoreDto> scores = new();
+    private List<QualityScoreDto> recentScores => scores.OrderByDescending(s => s.Date).Take(10).ToList();
+    private List<TranslatorRanking> translatorRankings = new();
+    private bool loading = true;
+
+    private int excellentCount = 0;
+    private int goodCount = 0;
+    private int needsImprovementCount = 0;
+
+    private string GetAverageQuality()
+    {
+        if (!scores.Any()) return "0%";
+        return $"{scores.Average(s => s.QualityPercentage):F1}%";
+    }
+
+    private string GetAverageReviewTime()
+    {
+        if (!scores.Any()) return "0h";
+        var avgHours = scores.Average(s => s.ReviewHours);
+        return $"{avgHours:F1}h";
+    }
+
+    private string GetQualityColor(double percentage)
+    {
+        return percentage switch
+        {
+            >= 95 => "success",
+            >= 80 => "warning",
+            _ => "error"
+        };
+    }
+
+    private string GetPerformanceStatusColor(string status)
+    {
+        return status switch
+        {
+            "Excellent" => "success",
+            "Good" => "warning",
+            _ => "error"
+        };
+    }
+
+    private double GetDistributionPercent(int count)
+    {
+        if (!scores.Any()) return 0;
+        return (double)count / scores.Count * 100;
+    }
+
+    private RenderFragment RenderDistributionBar(string label, int count, string color) => __builder =>
+    {
+        var percent = GetDistributionPercent(count);
+        <div style="margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span>@label</span>
+                <span><strong>@count</strong></span>
+            </div>
+            <div style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
+                <div style="width: @(percent)%; height: 100%; background: @color; border-radius: 4px; transition: width 0.3s;"></div>
+            </div>
+        </div>;
+    };
+
+    public class TranslatorRanking
+    {
+        public string TranslatorName { get; set; } = string.Empty;
+        public int ReviewCount { get; set; }
+        public double AverageQuality { get; set; }
+        public int TotalErrors { get; set; }
+    }
+}

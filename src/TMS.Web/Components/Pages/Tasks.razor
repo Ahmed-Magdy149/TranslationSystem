@@ -93,9 +93,15 @@
                     Placeholder="Filter by User"
                     AllowClear="true"
                     OnSelectedItemChanged="OnFilterChanged">
-                @foreach (var u in users)
+                @if (users != null)
                 {
-                    <SelectOption TItemValue="string" TItem="string" Value="@u.Id" Label="@u.Name" />
+                    @foreach (var u in users)
+                    {
+                        if (u != null && !string.IsNullOrEmpty(u.FullName))
+                        {
+                            <SelectOption TItemValue="string" TItem="string" Value="@u.Id" Label="@u.FullName" />
+                        }
+                    }
                 }
             </Select>
             @if (!string.IsNullOrEmpty(searchText) || !string.IsNullOrEmpty(selectedStatus) || !string.IsNullOrEmpty(selectedUserId))
@@ -217,9 +223,15 @@
             <FormItem Label="Assign To">
                 <Select @bind-Value="@formModel.AssignedUserId" TItemValue="string" TItem="string"
                         Placeholder="Select a user" AllowClear="true" EnableSearch>
-                    @foreach (var u in users)
+                    @if (users != null)
                     {
-                        <SelectOption TItemValue="string" TItem="string" Value="@u.Id" Label="@u.Name" />
+                        @foreach (var u in users)
+                        {
+                            if (u != null && !string.IsNullOrEmpty(u.FullName))
+                            {
+                                <SelectOption TItemValue="string" TItem="string" Value="@u.Id" Label="@u.FullName" />
+                            }
+                        }
                     }
                 </Select>
             </FormItem>

@@ -20,6 +20,7 @@ builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 builder.Services.AddScoped<ITranslatorRepository, TranslatorRepository>();
 builder.Services.AddScoped<ITaskHistoryRepository, TaskHistoryRepository>();
 builder.Services.AddScoped<IServiceRateRepository, ServiceRateRepository>();
+builder.Services.AddScoped<IQualityScoreRepository, QualityScoreRepository>();
 builder.Services.AddScoped<IRepository<TaskHistory>>(sp =>
     new MongoRepository<TaskHistory>(sp.GetRequiredService<MongoDbContext>().TaskHistories));
 builder.Services.AddScoped<IRepository<Review>>(sp =>
@@ -34,6 +35,7 @@ builder.Services.AddScoped<IApprovalService, ApprovalService>();
 builder.Services.AddScoped<IAssistantService, AssistantService>();
 builder.Services.AddScoped<IServiceRateService, ServiceRateService>();
 builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IQualityScoreService, QualityScoreService>();
 
 // Infrastructure Services
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();
@@ -45,6 +47,11 @@ builder.Services.AddControllers();
 // Blazor
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddServerSideBlazor(options =>
+{
+    options.DetailedErrors = true;
+});
 
 // Ant Design Blazor
 builder.Services.AddAntDesign();
@@ -66,6 +73,7 @@ builder.Services.AddScoped(sp =>
 // Web Services
 builder.Services.AddScoped<TMS.Web.Services.IUserService, TMS.Web.Services.UserService>();
 builder.Services.AddScoped<TMS.Web.Services.ITaskWebService, TMS.Web.Services.TaskWebService>();
+builder.Services.AddScoped<TMS.Web.Services.IQualityScoreService, TMS.Web.Services.QualityScoreService>();
 
 var app = builder.Build();
 
