@@ -81,6 +81,14 @@
                     <Icon Type="bar-chart" />
                     <span>Reports</span>
                 </MenuItem>
+                <MenuItem Key="reviewer-dashboard" RouterLink="/reviewer-dashboard">
+                    <Icon Type="dashboard" />
+                    <span>Reviewer Dashboard</span>
+                </MenuItem>
+                <MenuItem Key="quality-scores" RouterLink="/quality-scores">
+                    <Icon Type="star" />
+                    <span>Quality Scores</span>
+                </MenuItem>
                 <MenuItem Key="users" RouterLink="/users">
                     <Icon Type="user" />
                     <span>Users</span>
@@ -111,6 +119,14 @@
                 <MenuItem Key="my-reviews" RouterLink="/my-reviews">
                     <Icon Type="star" />
                     <span>My Reviews</span>
+                </MenuItem>
+                <MenuItem Key="reviewer-dashboard" RouterLink="/reviewer-dashboard">
+                    <Icon Type="dashboard" />
+                    <span>Reviewer Dashboard</span>
+                </MenuItem>
+                <MenuItem Key="quality-scores" RouterLink="/quality-scores">
+                    <Icon Type="safety" />
+                    <span>Quality Scores</span>
                 </MenuItem>
                 <MenuItem Key="reports" RouterLink="/reports">
                     <Icon Type="bar-chart" />
@@ -196,6 +212,8 @@
             "translators" => "translators",
             "users" => "users",
             "reviews" or "my-reviews" => IsManagerRole ? "reviews" : "my-reviews",
+            "reviewer-dashboard" => "reviewer-dashboard",
+            "quality-scores" => "quality-scores",
             "reports" => "reports",
             "calendar" => "calendar",
             "profile" => "profile",

@@ -1,4 +1,5 @@
 using TMS.Core.DTOs;
+using TMS.Core.Enums;
 
 namespace TMS.Web.Services;
 
@@ -9,4 +10,5 @@ public interface IUserService
     Task<bool> CreateUserAsync(CreateUserDto user);
     Task<bool> UpdateUserAsync(string id, UpdateUserDto user);
     Task<bool> DeleteUserAsync(string id);
+    Task<bool> ChangeStatusAsync(string id, UserStatus status);
 }

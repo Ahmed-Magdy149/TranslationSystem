@@ -26,9 +26,15 @@
                     <Select TItem="string" TItemValue="string" @bind-Value="@filter.ServiceType" 
                             Style="width:100%;" AllowClear Placeholder="All Services">
                         <SelectOptions>
-                            @foreach (var service in serviceTypes)
+                            @if (serviceTypes != null)
                             {
-                                <SelectOption TItemValue="string" TItem="string" Value="@service" Label="@service" />
+                                @foreach (var service in serviceTypes)
+                                {
+                                    if (!string.IsNullOrEmpty(service))
+                                    {
+                                        <SelectOption TItemValue="string" TItem="string" Value="@service" Label="@service" />
+                                    }
+                                }
                             }
                         </SelectOptions>
                     </Select>
@@ -39,9 +45,15 @@
                     <Select TItem="string" TItemValue="string" @bind-Value="@filter.Status" 
                             Style="width:100%;" AllowClear Placeholder="All Status">
                         <SelectOptions>
-                            @foreach (var status in statusOptions)
+                            @if (statusOptions != null)
                             {
-                                <SelectOption TItemValue="string" TItem="string" Value="@status" Label="@status" />
+                                @foreach (var status in statusOptions)
+                                {
+                                    if (!string.IsNullOrEmpty(status))
+                                    {
+                                        <SelectOption TItemValue="string" TItem="string" Value="@status" Label="@status" />
+                                    }
+                                }
                             }
                         </SelectOptions>
                     </Select>

@@ -8,11 +8,11 @@
 <PageContainer>
     <!-- Page Header -->
     <AppPageHeader Title="Users"
-                   Subtitle="Manage team members, roles, and access permissions"
+                   Subtitle="Manage employees, translators, reviewers, and QA members"
                    Breadcrumb="Users">
         <Actions>
             <Button Type="ButtonType.Primary" Icon="plus" OnClick="ShowAddModal">
-                Add User
+                Add Employee
             </Button>
         </Actions>
     </AppPageHeader>
@@ -34,7 +34,7 @@
             <div class="users-stat-inner">
                 <div>
                     <div class="users-stat-label">Active</div>
-                    <div class="users-stat-value" style="color: var(--tms-success);">@users.Count(u => u.IsActive)</div>
+                    <div class="users-stat-value" style="color: var(--tms-success);">@users.Count(u => u.Status == UserStatus.Active)</div>
                 </div>
                 <div class="tms-card-icon tms-card-icon-green">
                     <Icon Type="check-circle" />
@@ -45,7 +45,7 @@
             <div class="users-stat-inner">
                 <div>
                     <div class="users-stat-label">Inactive</div>
-                    <div class="users-stat-value" style="color: var(--tms-danger);">@users.Count(u => !u.IsActive)</div>
+                    <div class="users-stat-value" style="color: var(--tms-danger);">@users.Count(u => u.Status == UserStatus.Inactive)</div>
                 </div>
                 <div class="tms-card-icon tms-card-icon-red">
                     <Icon Type="pause-circle" />
@@ -55,11 +55,11 @@
         <Card Bordered="false" Class="tms-card-stat">
             <div class="users-stat-inner">
                 <div>
-                    <div class="users-stat-label">Admins</div>
-                    <div class="users-stat-value" style="color: #9333ea;">@users.Count(u => u.Role == UserRole.Admin)</div>
+                    <div class="users-stat-label">Translators</div>
+                    <div class="users-stat-value" style="color: #9333ea;">@users.Count(u => u.Role == UserRole.Translator)</div>
                 </div>
                 <div class="tms-card-icon tms-card-icon-purple">
-                    <Icon Type="crown" />
+                    <Icon Type="global" />
                 </div>
             </div>
         </Card>
@@ -85,6 +85,7 @@
             <SelectOption TItemValue="string" TItem="string" Value="@("TeamLeader")" Label="Team Leader" />
             <SelectOption TItemValue="string" TItem="string" Value="@("Reviewer")" Label="Reviewer" />
             <SelectOption TItemValue="string" TItem="string" Value="@("Translator")" Label="Translator" />
+            <SelectOption TItemValue="string" TItem="string" Value="@("QAMember")" Label="QA Member" />
         </Select>
         <Select TItemValue="string" TItem="string"
                 Style="width: 160px;"
@@ -100,34 +101,58 @@
 
     <!-- Users Table -->
     <div class="tms-section">
-        <Table DataSource="@filteredUsers" Loading="@loading" TItem="UserDto" RowKey="x => x.Id" Size="TableSize.Middle">
-            <Column Title="User" @bind-Field="@context.Name" Sortable Width="220">
+        <Table DataSource="@pagedUsers" Loading="@loading" TItem="UserDto" RowKey="x => x.Id" Size="TableSize.Middle">
+            <Column Title="Employee" @bind-Field="@context.FullName" Sortable Width="220">
                 <div class="users-name-cell">
                     <Avatar Style="background: var(--tms-primary); font-weight: 600; font-size: 14px;"
                             Size="AvatarSize.Small">
-                        @GetInitials(context.Name)
+                        @GetInitials(context.FullName)
                     </Avatar>
                     <div class="users-name-text">
-                        <span class="users-name-name">@context.Name</span>
+                        <span class="users-name-name">@context.FullName</span>
                         <span class="users-name-email">@context.Email</span>
                     </div>
                 </div>
             </Column>
             <Column Title="Role" @bind-Field="@context.Role" Width="120" Sortable>
-                <Tag Color="@GetRoleColor(context.Role.ToString())">@context.Role.ToString()</Tag>
+                <Tag Color="@GetRoleColor(context.Role.ToString())">@GetRoleDisplayName(context.Role)</Tag>
             </Column>
-            <Column Title="Status" @bind-Field="@context.IsActive" Width="120" Sortable>
-                <StatusBadge Status="@(context.IsActive ? "active" : "inactive")"
-                             Text="@(context.IsActive ? "Active" : "Inactive")" />
+            <Column Title="Language" @bind-Field="@context.Language" Width="120" Sortable>
+                @(string.IsNullOrEmpty(context.Language) ? "-" : context.Language)
             </Column>
-            <Column Title="Created" @bind-Field="@context.CreatedAt" Width="130" Sortable>
-                @context.CreatedAt.ToString("MMM dd, yyyy")
+            <Column Title="Service" @bind-Field="@context.MainService" Width="130" Sortable>
+                @(string.IsNullOrEmpty(context.MainService) ? "-" : context.MainService)
             </Column>
-            <ActionColumn Title="" Width="90" Class="users-actions-col">
+            <Column Title="Daily Target" @bind-Field="@context.DailyTarget" Width="120" Sortable>
+                @(context.DailyTarget > 0 ? $"{context.DailyTarget:N0} words" : "-")
+            </Column>
+            <Column Title="Status" @bind-Field="@context.Status" Width="110" Sortable>
+                <StatusBadge Status="@(context.Status == UserStatus.Active ? "active" : "inactive")"
+                             Text="@(context.Status == UserStatus.Active ? "Active" : "Inactive")" />
+            </Column>
+            <Column Title="Joining Date" @bind-Field="@context.JoiningDate" Width="130" Sortable>
+                @context.JoiningDate.ToString("MMM dd, yyyy")
+            </Column>
+            <ActionColumn Title="Actions" Width="150" Class="users-actions-col">
                 <div class="tms-row-actions">
+                    <Tooltip Title="View">
+                        <Button Type="ButtonType.Text" Icon="eye" OnClick="() => ShowViewModal(context)" />
+                    </Tooltip>
                     <Tooltip Title="Edit">
                         <Button Type="ButtonType.Text" Icon="edit" OnClick="() => ShowEditModal(context)" />
                     </Tooltip>
+                    @if (context.Status == UserStatus.Active)
+                    {
+                        <Tooltip Title="Deactivate">
+                            <Button Type="ButtonType.Text" Icon="pause-circle" OnClick="() => ChangeStatus(context.Id, UserStatus.Inactive)" />
+                        </Tooltip>
+                    }
+                    else
+                    {
+                        <Tooltip Title="Activate">
+                            <Button Type="ButtonType.Text" Icon="check-circle" Style="color: var(--tms-success);" OnClick="() => ChangeStatus(context.Id, UserStatus.Active)" />
+                        </Tooltip>
+                    }
                     <ConfirmDialog Title="Delete this user?"
                                    OkText="Delete"
                                    OkType="ButtonType.Primary"
@@ -139,21 +164,56 @@
                 </div>
             </ActionColumn>
         </Table>
+
+        <!-- Pagination -->
+        <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
+            <Pagination Total="@filteredUsers.Count"
+                        Current="@currentPage"
+                        PageSize="@pageSize"
+                        OnChange="OnPageChanged"
+                        ShowSizeChanger="false" />
+        </div>
     </div>
 </PageContainer>
 
+<!-- View Modal -->
+<Modal Title="Employee Details"
+       @bind-Visible="@viewModalVisible"
+       OnOk="CloseViewModal"
+       OnCancel="CloseViewModal"
+       OkText="@("Close")"
+       Width="560">
+    @if (viewUser != null)
+    {
+        <Descriptions Bordered Column="@descriptionColumn">
+            <DescriptionsItem Title="Full Name">@viewUser.FullName</DescriptionsItem>
+            <DescriptionsItem Title="Email">@viewUser.Email</DescriptionsItem>
+            <DescriptionsItem Title="Phone">@(string.IsNullOrEmpty(viewUser.PhoneNumber) ? "-" : viewUser.PhoneNumber)</DescriptionsItem>
+            <DescriptionsItem Title="Role"><Tag Color="@GetRoleColor(viewUser.Role.ToString())">@GetRoleDisplayName(viewUser.Role)</Tag></DescriptionsItem>
+            <DescriptionsItem Title="Language">@(string.IsNullOrEmpty(viewUser.Language) ? "-" : viewUser.Language)</DescriptionsItem>
+            <DescriptionsItem Title="Specialization">@(string.IsNullOrEmpty(viewUser.Specialization) ? "-" : viewUser.Specialization)</DescriptionsItem>
+            <DescriptionsItem Title="Main Service">@(string.IsNullOrEmpty(viewUser.MainService) ? "-" : viewUser.MainService)</DescriptionsItem>
+            <DescriptionsItem Title="Experience">@(string.IsNullOrEmpty(viewUser.ExperienceLevel) ? "-" : viewUser.ExperienceLevel)</DescriptionsItem>
+            <DescriptionsItem Title="Daily Target">@(viewUser.DailyTarget > 0 ? $"{viewUser.DailyTarget:N0} words" : "-")</DescriptionsItem>
+            <DescriptionsItem Title="Hourly Rate">@(viewUser.HourlyRate > 0 ? $"{viewUser.HourlyRate:N0} words/h" : "-")</DescriptionsItem>
+            <DescriptionsItem Title="Status"><StatusBadge Status="@(viewUser.Status == UserStatus.Active ? "active" : "inactive")" Text="@(viewUser.Status == UserStatus.Active ? "Active" : "Inactive")" /></DescriptionsItem>
+            <DescriptionsItem Title="Joining Date">@viewUser.JoiningDate.ToString("MMMM dd, yyyy")</DescriptionsItem>
+        </Descriptions>
+    }
+</Modal>
+
 <!-- Add / Edit Modal -->
-<Modal Title="@(isEditMode ? "Edit User" : "Add New User")"
+<Modal Title="@(isEditMode ? "Edit Employee" : "Add New Employee")"
        @bind-Visible="@modalVisible"
        OnOk="HandleSubmit"
        OnCancel="HandleCancel"
-       OkText="@(isEditMode ? "Save Changes" : "Create User")"
-       Width="520">
+       OkText="@(isEditMode ? "Save Changes" : "Create Employee")"
+       Width="720">
     <Form Model="@currentUser" Layout="@FormLayout.Vertical">
         <Row Gutter="16">
             <Col Span="12">
                 <FormItem Label="Full Name">
-                    <Input @bind-Value="@currentUser.Name" Placeholder="Enter full name" />
+                    <Input @bind-Value="@currentUser.FullName" Placeholder="Enter full name" />
                 </FormItem>
             </Col>
             <Col Span="12">
@@ -162,12 +222,21 @@
                 </FormItem>
             </Col>
         </Row>
-        @if (!isEditMode)
-        {
-            <FormItem Label="Password">
-                <InputPassword @bind-Value="@currentUser.Password" Placeholder="Enter a secure password" />
-            </FormItem>
-        }
+        <Row Gutter="16">
+            <Col Span="12">
+                <FormItem Label="Phone Number">
+                    <Input @bind-Value="@currentUser.PhoneNumber" Placeholder="+1 234 567 890" />
+                </FormItem>
+            </Col>
+            <Col Span="12">
+                @if (!isEditMode)
+                {
+                    <FormItem Label="Password">
+                        <InputPassword @bind-Value="@currentUser.Password" Placeholder="Enter a secure password" />
+                    </FormItem>
+                }
+            </Col>
+        </Row>
         <Row Gutter="16">
             <Col Span="12">
                 <FormItem Label="Role">
@@ -178,12 +247,64 @@
                         <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.TeamLeader" Label="Team Leader" />
                         <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.Reviewer" Label="Reviewer" />
                         <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.Translator" Label="Translator" />
+                        <SelectOption TItemValue="UserRole" TItem="UserRole" Value="@UserRole.QAMember" Label="QA Member" />
                     </Select>
                 </FormItem>
             </Col>
             <Col Span="12">
                 <FormItem Label="Account Status">
-                    <Switch @bind-Value="@currentUser.IsActive" CheckedChildren="Active" UnCheckedChildren="Inactive" />
+                    <Select @bind-Value="@currentUser.Status" TItemValue="UserStatus" TItem="UserStatus" Placeholder="Select status">
+                        <SelectOption TItemValue="UserStatus" TItem="UserStatus" Value="@UserStatus.Active" Label="Active" />
+                        <SelectOption TItemValue="UserStatus" TItem="UserStatus" Value="@UserStatus.Inactive" Label="Inactive" />
+                    </Select>
+                </FormItem>
+            </Col>
+        </Row>
+        <Row Gutter="16">
+            <Col Span="12">
+                <FormItem Label="Language(s)">
+                    <Input @bind-Value="@currentUser.Language" Placeholder="e.g. English, Arabic" />
+                </FormItem>
+            </Col>
+            <Col Span="12">
+                <FormItem Label="Specialization">
+                    <Input @bind-Value="@currentUser.Specialization" Placeholder="e.g. Medical, Legal, Technical" />
+                </FormItem>
+            </Col>
+        </Row>
+        <Row Gutter="16">
+            <Col Span="12">
+                <FormItem Label="Main Service">
+                    <Input @bind-Value="@currentUser.MainService" Placeholder="e.g. Translation, MTPE, QA" />
+                </FormItem>
+            </Col>
+            <Col Span="12">
+                <FormItem Label="Experience Level">
+                    <Select @bind-Value="@currentUser.ExperienceLevel" TItemValue="string" TItem="string" Placeholder="Select level">
+                        <SelectOption TItemValue="string" TItem="string" Value="@("Junior")" Label="Junior" />
+                        <SelectOption TItemValue="string" TItem="string" Value="@("Mid-level")" Label="Mid-level" />
+                        <SelectOption TItemValue="string" TItem="string" Value="@("Senior")" Label="Senior" />
+                        <SelectOption TItemValue="string" TItem="string" Value="@("Lead")" Label="Lead" />
+                    </Select>
+                </FormItem>
+            </Col>
+        </Row>
+        <Row Gutter="16">
+            <Col Span="12">
+                <FormItem Label="Daily Target (words)">
+                    <AntDesign.InputNumber TValue="int" @bind-Value="@currentUser.DailyTarget" Min="0" Style="width:100%;" />
+                </FormItem>
+            </Col>
+            <Col Span="12">
+                <FormItem Label="Hourly Rate (words/hour)">
+                    <AntDesign.InputNumber TValue="double" @bind-Value="@currentUser.HourlyRate" Min="0" Style="width:100%;" />
+                </FormItem>
+            </Col>
+        </Row>
+        <Row Gutter="16">
+            <Col Span="12">
+                <FormItem Label="Joining Date">
+                    <DatePicker TValue="DateTime" @bind-Value="@currentUser.JoiningDate" Style="width:100%;" />
                 </FormItem>
             </Col>
         </Row>
@@ -199,31 +320,59 @@
     private string searchText = "";
     private string filterRole = "all";
     private string filterStatus = "all";
+    private int currentPage = 1;
+    private int pageSize = 10;
+    private Dictionary<string, int> descriptionColumn = new()
+    {
+        ["xxl"] = 2,
+        ["xl"] = 2,
+        ["lg"] = 2,
+        ["md"] = 1,
+        ["sm"] = 1,
+        ["xs"] = 1
+    };
 
     private List<UserDto> filteredUsers => users
         .Where(u =>
         {
             var matchesSearch = string.IsNullOrWhiteSpace(searchText)
-                || u.Name?.Contains(searchText, StringComparison.OrdinalIgnoreCase) == true
-                || u.Email?.Contains(searchText, StringComparison.OrdinalIgnoreCase) == true;
+                || u.FullName?.Contains(searchText, StringComparison.OrdinalIgnoreCase) == true
+                || u.Email?.Contains(searchText, StringComparison.OrdinalIgnoreCase) == true
+                || u.PhoneNumber?.Contains(searchText, StringComparison.OrdinalIgnoreCase) == true;
 
             var matchesRole = filterRole == "all" || u.Role.ToString() == filterRole;
             var matchesStatus = filterStatus == "all"
-                || (filterStatus == "active" && u.IsActive)
-                || (filterStatus == "inactive" && !u.IsActive);
+                || (filterStatus == "active" && u.Status == UserStatus.Active)
+                || (filterStatus == "inactive" && u.Status == UserStatus.Inactive);
 
             return matchesSearch && matchesRole && matchesStatus;
         })
         .ToList();
 
+    private List<UserDto> pagedUsers => filteredUsers
+        .Skip((currentPage - 1) * pageSize)
+        .Take(pageSize)
+        .ToList();
+
     private void OnSearch(ChangeEventArgs e)
     {
         searchText = e.Value?.ToString() ?? "";
+        currentPage = 1;
     }
 
     private void OnFilterChanged()
     {
-        // Triggers re-render automatically
+        currentPage = 1;
+    }
+
+    private void OnPageChanged(PaginationEventArgs args)
+    {
+        currentPage = args.Page;
+    }
+
+    private void CloseViewModal()
+    {
+        viewModalVisible = false;
     }
 
     private string GetInitials(string? name)
@@ -232,6 +381,17 @@
         var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length >= 2) return $"{parts[0][0]}{parts[^1][0]}".ToUpper();
         return name[..Math.Min(2, name.Length)].ToUpper();
+    }
+
+    private string GetRoleDisplayName(UserRole role)
+    {
+        return role switch
+        {
+            UserRole.ProjectManager => "Project Manager",
+            UserRole.TeamLeader => "Team Leader",
+            UserRole.QAMember => "QA Member",
+            _ => role.ToString()
+        };
     }
 }
 

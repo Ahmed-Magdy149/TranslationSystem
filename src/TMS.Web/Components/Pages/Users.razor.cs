@@ -14,8 +14,10 @@ public partial class Users : ComponentBase
     private List<UserDto> users = new();
     private bool loading = true;
     private bool modalVisible = false;
+    private bool viewModalVisible = false;
     private bool isEditMode = false;
     private CreateUserDto currentUser = new();
+    private UserDto? viewUser;
     private string editUserId = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -43,7 +45,12 @@ public partial class Users : ComponentBase
     private void ShowAddModal()
     {
         isEditMode = false;
-        currentUser = new CreateUserDto { IsActive = true, Role = UserRole.Translator };
+        currentUser = new CreateUserDto
+        {
+            Status = UserStatus.Active,
+            Role = UserRole.Translator,
+            JoiningDate = DateTime.UtcNow
+        };
         editUserId = string.Empty;
         modalVisible = true;
     }
@@ -54,13 +61,27 @@ public partial class Users : ComponentBase
         editUserId = user.Id;
         currentUser = new CreateUserDto
         {
-            Name = user.Name,
+            FullName = user.FullName,
             Email = user.Email,
+            PhoneNumber = user.PhoneNumber,
             Role = user.Role,
-            IsActive = user.IsActive,
+            Status = user.Status,
+            Language = user.Language,
+            Specialization = user.Specialization,
+            MainService = user.MainService,
+            ExperienceLevel = user.ExperienceLevel,
+            DailyTarget = user.DailyTarget,
+            HourlyRate = user.HourlyRate,
+            JoiningDate = user.JoiningDate,
             Password = string.Empty
         };
         modalVisible = true;
+    }
+
+    private void ShowViewModal(UserDto user)
+    {
+        viewUser = user;
+        viewModalVisible = true;
     }
 
     private async Task HandleSubmit()
@@ -71,21 +92,29 @@ public partial class Users : ComponentBase
             {
                 var updateDto = new UpdateUserDto
                 {
-                    Name = currentUser.Name,
+                    FullName = currentUser.FullName,
                     Email = currentUser.Email,
+                    PhoneNumber = currentUser.PhoneNumber,
                     Role = currentUser.Role,
-                    IsActive = currentUser.IsActive
+                    Status = currentUser.Status,
+                    Language = currentUser.Language,
+                    Specialization = currentUser.Specialization,
+                    MainService = currentUser.MainService,
+                    ExperienceLevel = currentUser.ExperienceLevel,
+                    DailyTarget = currentUser.DailyTarget,
+                    HourlyRate = currentUser.HourlyRate,
+                    JoiningDate = currentUser.JoiningDate
                 };
                 var success = await UserService.UpdateUserAsync(editUserId, updateDto);
                 if (success)
                 {
-                    Message.Success("User updated successfully!");
+                    Message.Success("Employee updated successfully!");
                     modalVisible = false;
                     await LoadUsers();
                 }
                 else
                 {
-                    Message.Error("Failed to update user");
+                    Message.Error("Failed to update employee");
                 }
             }
             else
@@ -93,13 +122,13 @@ public partial class Users : ComponentBase
                 var success = await UserService.CreateUserAsync(currentUser);
                 if (success)
                 {
-                    Message.Success("User created successfully!");
+                    Message.Success("Employee created successfully!");
                     modalVisible = false;
                     await LoadUsers();
                 }
                 else
                 {
-                    Message.Error("Failed to create user");
+                    Message.Error("Failed to create employee");
                 }
             }
         }
@@ -114,6 +143,27 @@ public partial class Users : ComponentBase
         modalVisible = false;
     }
 
+    private async Task ChangeStatus(string userId, UserStatus status)
+    {
+        try
+        {
+            var success = await UserService.ChangeStatusAsync(userId, status);
+            if (success)
+            {
+                Message.Success($"Employee {(status == UserStatus.Active ? "activated" : "deactivated")} successfully!");
+                await LoadUsers();
+            }
+            else
+            {
+                Message.Error("Failed to change status");
+            }
+        }
+        catch (Exception ex)
+        {
+            Message.Error($"Error: {ex.Message}");
+        }
+    }
+
     private async Task DeleteUser(string userId)
     {
         try
@@ -121,12 +171,12 @@ public partial class Users : ComponentBase
             var success = await UserService.DeleteUserAsync(userId);
             if (success)
             {
-                Message.Success("User deleted successfully!");
+                Message.Success("Employee deleted successfully!");
                 await LoadUsers();
             }
             else
             {
-                Message.Error("Failed to delete user");
+                Message.Error("Failed to delete employee");
             }
         }
         catch (Exception ex)
@@ -145,6 +195,7 @@ public partial class Users : ComponentBase
             "TeamLeader" => "orange",
             "Reviewer" => "cyan",
             "Translator" => "green",
+            "QAMember" => "magenta",
             _ => "default"
         };
     }

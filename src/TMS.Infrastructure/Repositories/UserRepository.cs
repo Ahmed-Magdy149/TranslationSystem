@@ -1,5 +1,6 @@
 using MongoDB.Driver;
 using TMS.Core.Entities;
+using TMS.Core.Enums;
 using TMS.Core.Interfaces;
 using TMS.Infrastructure.Data;
 
@@ -18,6 +19,6 @@ public class UserRepository : MongoRepository<User>, IUserRepository
 
     public async Task<IEnumerable<User>> GetActiveUsersAsync()
     {
-        return await _collection.Find(u => u.IsActive).ToListAsync();
+        return await _collection.Find(u => u.Status == UserStatus.Active).ToListAsync();
     }
 }

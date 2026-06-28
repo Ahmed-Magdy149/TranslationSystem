@@ -38,12 +38,20 @@ public class UserService : IUserService
 
         var user = new User
         {
-            Name = dto.Name,
+            FullName = dto.FullName,
             Email = dto.Email,
+            PhoneNumber = dto.PhoneNumber,
             PasswordHash = HashPassword(dto.Password),
             Role = dto.Role,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow
+            Language = dto.Language,
+            Specialization = dto.Specialization,
+            JoiningDate = dto.JoiningDate,
+            Status = dto.Status,
+            DailyTarget = dto.DailyTarget,
+            HourlyRate = dto.HourlyRate,
+            MainService = dto.MainService,
+            ExperienceLevel = dto.ExperienceLevel,
+            CreatedDate = DateTime.UtcNow
         };
 
         await _userRepository.CreateAsync(user);
@@ -56,12 +64,35 @@ public class UserService : IUserService
         var user = await _userRepository.GetByIdAsync(id)
             ?? throw new KeyNotFoundException($"User with id '{id}' not found.");
 
-        user.Name = dto.Name;
+        var existingByEmail = await _userRepository.GetByEmailAsync(dto.Email);
+        if (existingByEmail != null && existingByEmail.Id != id)
+            throw new InvalidOperationException($"Email '{dto.Email}' already in use by another user.");
+
+        user.FullName = dto.FullName;
         user.Email = dto.Email;
-        user.IsActive = dto.IsActive;
+        user.PhoneNumber = dto.PhoneNumber;
+        user.Role = dto.Role;
+        user.Language = dto.Language;
+        user.Specialization = dto.Specialization;
+        user.JoiningDate = dto.JoiningDate;
+        user.Status = dto.Status;
+        user.DailyTarget = dto.DailyTarget;
+        user.HourlyRate = dto.HourlyRate;
+        user.MainService = dto.MainService;
+        user.ExperienceLevel = dto.ExperienceLevel;
 
         await _userRepository.UpdateAsync(id, user);
         _logger.LogInformation("User updated: {Id}", id);
+    }
+
+    public async Task ChangeStatusAsync(string id, UserStatus status)
+    {
+        var user = await _userRepository.GetByIdAsync(id)
+            ?? throw new KeyNotFoundException($"User with id '{id}' not found.");
+
+        user.Status = status;
+        await _userRepository.UpdateAsync(id, user);
+        _logger.LogInformation("User status changed: {Id} -> {Status}", id, status);
     }
 
     public async Task ChangeRoleAsync(string id, UserRole role)
@@ -85,11 +116,20 @@ public class UserService : IUserService
         return new UserDto
         {
             Id = user.Id,
-            Name = user.Name,
+            FullName = user.FullName,
             Email = user.Email,
+            PhoneNumber = user.PhoneNumber,
             Role = user.Role,
-            IsActive = user.IsActive,
-            CreatedAt = user.CreatedAt
+            Language = user.Language,
+            Specialization = user.Specialization,
+            JoiningDate = user.JoiningDate,
+            Status = user.Status,
+            DailyTarget = user.DailyTarget,
+            HourlyRate = user.HourlyRate,
+            CreatedDate = user.CreatedDate,
+            LastLoginDate = user.LastLoginDate,
+            MainService = user.MainService,
+            ExperienceLevel = user.ExperienceLevel
         };
     }
 

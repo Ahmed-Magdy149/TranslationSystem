@@ -1,0 +1,7 @@
+namespace TMS.Core.Enums;
+
+public enum UserStatus
+{
+    Active,
+    Inactive
+}
